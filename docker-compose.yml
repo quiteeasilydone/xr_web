@@ -39,7 +39,7 @@ services:
     image: postgres:latest
     container_name: postgresdb
     volumes:
-      - db:/var/lib/postgresql/data
+      - ./db:/var/lib/postgresql/data
     restart: always
     environment:
       POSTGRES_DB: flaskdb
