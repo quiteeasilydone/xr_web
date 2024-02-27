@@ -1,0 +1,57 @@
+version: "3"
+
+services:
+  proxy:
+    depends_on:
+      - nginx
+      - flask
+    image: nginx:alpine
+    container_name: proxyserver 
+    restart: always 
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./proxyserver/nginx.conf:/etc/nginx/nginx.conf
+      - ./certbot:/etc/letsencrypt
+      - ./webpage:/usr/share/nginx/html
+
+  nginx:
+    image: nginx:latest
+    container_name: webpage
+    restart: always
+    volumes:
+      - ./webpage:/usr/share/nginx/html
+
+  flask:
+    build:
+      - context: ./flask
+      - dockerfile: Dockerfile
+    restart: always
+    container_name: api
+    command: gunicorn -w 1 -b 0.0.0.0:80 wsgi:server
+    environment:
+      DATABASE_URL: postgresql://flaskuser:flaskpassword@db/flaskdb
+    depends_on:
+      - db
+
+  db:
+    image: postgres:latest
+    container_name: postgresdb
+    volumes:
+      - db:/var/lib/postgresql/data
+    restart: always
+    environment:
+      POSTGRES_DB: flaskdb
+      POSTGRES_USER: flaskuser
+      POSTGRES_PASSWORD: flaskpassword
+
+  certbot:
+    depends_on:
+      - proxy 
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - ./certbot:/etc/letsencrypt
+      - ./webpage:/usr/share/nginx/html
+    command: certonly --webroot --webroot-path=/usr/share/nginx/html --email test@test.com --agree-tos --no-eff-email --keep-until-expiring -d rtctest.p-e.kr
