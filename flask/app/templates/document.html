@@ -16,18 +16,12 @@
         <div id="formSets">
             <!-- Form Set Template -->
 
-            <!-- 4/8수정부분 - 시작 -->
-            <div class="flex items-center mb-2">
-                <input type="text" id="topicInput" placeholder="Enter Topic" class="topic-input flex-1 border p-2 rounded">
-            </div>
-            <!-- 4/8수정부분 - 끝 -->
-
             <div class="form-set mb-4">
                 <div class="flex items-center mb-2">
                     <button class="toggle-dropdown mr-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
                         Select
                     </button>
-                    <input type="text" placeholder="Describe your instruction" class="description-input flex-1 border p-2 rounded">
+                    <input type="text" placeholder="Description Box" class="description-input flex-1 border p-2 rounded">
                     <button class="add-set ml-2 bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
                         add
                     </button>
@@ -38,21 +32,14 @@
                 <div class="form-controls">
                     <div class="mb-4">
                         <!-- <label class="block text-gray-700 text-sm font-bold mb-2">Multiple select</label> -->
-                        <!-- 4/8수정부분 - 시작 -->
-                        <select class="border bg-white rounded p-2 select-input">
-                            <option value="Single Choice">Single Choice</option>
-                            <option value="Multiple Choice">Multiple Choice</option>
-                            <option value="Multiple Selection">Multiple Selection</option>
-                            <option value="Check">Check</option>
-                            <option value="Numeric Input">Numeric Input</option>
+                        <select multiple class="border bg-white rounded p-2">
+                            <option>Single Choice</option>
+                            <option>Multiple Choice</option>
+                            <option>Multiple Selection</option>
+                            <option>Check</option>
+                            <option>Numeric Input</option>
                         </select>
-                        <input type="text" placeholder="Enter your option" class="single-choice-option-input flex-1 border p-2 rounded">
-                        <div class="option-container">
-                            <!-- 여기에 옵션 입력란이 동적으로 추가됩니다. -->
-                        </div>
-                        <button class="add-option ml-2 bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded hidden">
-                            Add Option
-                        </button>
+                    </div>
                     </div>
                 </div>
             </div>
@@ -65,27 +52,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const formSets = document.getElementById('formSets');
-            const addOptionButton = document.querySelector('.add-option');
-
-
-            formSets.addEventListener('change', function(event) {
-                const selectInput = document.querySelector('.select-input');
-                const singleChoiceOptionContainer = document.querySelector('.single-choice-option-input');
-
-                if (selectInput.value === 'Single Choice') {
-                    singleChoiceOptionContainer.classList.remove('hidden');
-
-                } else {
-                    singleChoiceOptionContainer.classList.add('hidden');
-                }
-
-                if (selectInput.value === 'Multiple Choice') {
-                    addOptionButton.classList.remove('hidden');
-                } else {
-                    addOptionButton.classList.add('hidden');
-                }
-            });
-
+        
             formSets.addEventListener('click', function(event) {
                 if (event.target.matches('.toggle-dropdown')) {
                     const formControls = event.target.closest('.form-set').querySelector('.form-controls');
@@ -94,8 +61,6 @@
                     const newSet = event.target.closest('.form-set').cloneNode(true);
                     // 새로운 세트 추가 시, select의 이벤트 리스너도 재설정해야 함
                     newSet.querySelector('.form-controls').classList.add('hidden');
-                    newSet.querySelector('.option-container').classList.add('hidden');
-
                     const toggleButton = newSet.querySelector('.toggle-dropdown');
                     toggleButton.textContent = 'Select';
                     formSets.appendChild(newSet);
@@ -106,16 +71,9 @@
                     } else {
                         alert('At least one set must remain.');
                     }
-                } else if (event.target.matches('.add-option')) {
-                    const optionContainer = event.target.closest('.form-controls').querySelector('.option-container');
-                    const newOptionInput = document.createElement('input');
-                    newOptionInput.type = 'text';
-                    newOptionInput.placeholder = 'Enter your option';
-                    newOptionInput.classList.add('flex-1', 'border', 'p-2', 'rounded');
-                    optionContainer.appendChild(newOptionInput);
                 }
             });
-
+        
             // select 엘리먼트의 변경사항을 추적하고, 토글 버튼에 반영하는 함수
             function updateSelectListeners() {
                 document.querySelectorAll('.form-set select').forEach(select => {
@@ -123,23 +81,26 @@
                     select.addEventListener('change', handleSelectChange); // 새로운 이벤트 리스너 추가
                 });
             }
-
+        
             // select 엘리먼트 변경 시 호출될 함수
             function handleSelectChange(event) {
                 const selectedOption = event.target.options[event.target.selectedIndex].text;
                 const toggleButton = event.target.closest('.form-set').querySelector('.toggle-dropdown');
                 toggleButton.textContent = selectedOption; // 토글 버튼 텍스트 업데이트
             }
-
+        
             updateSelectListeners(); // 초기 페이지 로드 시 이벤트 리스너 설정
         });
     </script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+
+
+
             document.querySelector('.submit-button').addEventListener('click', function(e) {
                 e.preventDefault();
                 
-                var topic = document.querySelector('.topic-input').value; // 입력된 주제 가져오기
+                
                 var description = document.querySelector('.description-input').value;
                 var select = document.querySelector('.form-set select');
                 var selection = Array.from(select.selectedOptions).map(option => option.value);
@@ -149,7 +110,7 @@
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ topic: topic, description: description, selection: selection, options: options, answer: answer }), // topic: topic, description: 지시문, selection: 지시문 타입(ex-multiplechoice)
+                    body: JSON.stringify({ topic: topic, description: description, selection: selection }),
                 })
                 .then(response => response.json())
                 .then(data => {

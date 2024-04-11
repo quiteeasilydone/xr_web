@@ -1,0 +1,4 @@
+CREATE TABLE IF NOT EXISTS messages (
+    id SERIAL PRIMARY KEY,
+    data JSON NOT NULL
+);

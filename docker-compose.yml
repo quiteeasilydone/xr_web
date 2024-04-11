@@ -29,7 +29,7 @@ services:
       dockerfile: Dockerfile
     restart: always
     container_name: api
-    command: gunicorn -w 1 -b 0.0.0.0:80 wsgi:server
+    command: gunicorn -k eventlet -w 1 wsgi:server --bind 0.0.0.0:80
     environment:
       DATABASE_URL: postgresql://flaskuser:flaskpassword@db/flaskdb
     depends_on:
@@ -41,10 +41,27 @@ services:
     volumes:
       - ./db:/var/lib/postgresql/data
     restart: always
+    ports:
+      - "5432:5432"
     environment:
-      POSTGRES_DB: flaskdb
-      POSTGRES_USER: flaskuser
-      POSTGRES_PASSWORD: flaskpassword
+      POSTGRES_DB: "flaskdb"
+      POSTGRES_USER: "flaskuser"
+      POSTGRES_PASSWORD: "flaskpassword"
+  
+  pgadmin:
+    container_name: pgadmin
+    image: dpage/pgadmin4
+    restart: unless-stopped
+    ports:
+      - "5555:80"
+    volumes:
+      - ./pgadmin:/var/lib/pgadmin
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=example@pgadmin.com
+      - PGADMIN_DEFAULT_PASSWORD=pgadmin
+      - TZ=Asia/Seoul
+    depends_on:
+      - db
 
   certbot:
     depends_on:
