@@ -1,0 +1,137 @@
+/* 기본 스타일 */
+body {
+    font-family: Arial, sans-serif;
+  }
+  
+  button {
+    margin: 0 5px; /* 좌우 여백을 5px로 지정합니다. */
+  }
+  
+  #container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+  }
+  
+  .topic {
+    margin-top: 20px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #fff;
+  }
+  
+  .topicInput,
+  .instructionInput {
+    width: 70%;
+    margin-bottom: 10px;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+  }
+  
+  .instructionContainer {
+    margin-bottom: 10px;
+  }
+  
+  .instruction {
+    margin-bottom: 10px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+  }
+  
+  .instructionTypeSelect {
+    margin-bottom: 10px;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #fff;
+  }
+  
+  #addTopicBtn {
+    margin-bottom: 10px;
+    padding: 8px 15px;
+    border: none;
+    border-radius: 5px;
+    background-color: #007bff;
+    color: #fff;
+    cursor: pointer;
+  }
+  
+  .addOptionBtn {
+    margin-bottom: 10px;
+    padding: 8px 15px;
+    border: none;
+    border-radius: 5px;
+    background-color: #007bff;
+    color: #fff;
+    cursor: pointer;
+  }
+  
+  .addInstructionBtn {
+    margin-bottom: 10px;
+    padding: 8px 15px;
+    border: none;
+    border-radius: 5px;
+    background-color: #007bff;
+    color: #fff;
+    cursor: pointer;
+  }
+  
+  .toggleInstructionBtn {
+    margin-bottom: 10px;
+    padding: 8px 15px;
+    border: none;
+    border-radius: 5px;
+    background-color: #28a745;
+    color: #fff;
+    cursor: pointer;
+  }
+  
+  .delete-btn {
+    padding: 5px 10px;
+    border: none;
+    border-radius: 5px;
+    background-color: #dc3545;
+    color: #fff;
+    cursor: pointer;
+  }
+  
+  .optionsContainer {
+    padding: 10px;
+    background-color: #f0f0f0;
+  }
+  
+  .option {
+    margin-bottom: 5px;
+  }
+  
+  /* 보고서 양식 저장 버튼 */
+  #generateJsonBtn {
+    margin-top: 20px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    background-color: #007bff;
+    color: #fff;
+    cursor: pointer;
+  }
+  
+  #generateJsonBtn:hover {
+    background-color: #0056b3;
+  }
+  
+  .buttonContainer {
+    text-align: center; /* 버튼을 가운데 정렬합니다. */
+    margin-top: 20px; /* 버튼과 내용 사이의 간격을 조절합니다. */
+  }
+  
+  .buttonContainer button {
+    margin: 0 10px; /* 각 버튼 사이의 간격을 조절합니다. */
+  }
+  
