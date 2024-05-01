@@ -5,6 +5,7 @@ services:
     depends_on:
       - nginx
       - flask
+      # - janus
     image: nginx:alpine
     container_name: proxyserver 
     restart: always 
@@ -62,6 +63,25 @@ services:
       - TZ=Asia/Seoul
     depends_on:
       - db
+
+  # janus:
+  #   image: 'sucwangsr/janus-webrtc-gateway-docker:1.2.1-slim'
+  #   command: /usr/local/bin/janus -F /usr/local/etc/janus   # Janus 이미지
+  #   container_name: janusserver
+  #   restart: always
+  #   volumes:
+  #     - "./janus/conf/janus.transport.http.jcfg:/usr/local/etc/janus/janus.transport.http.jcfg"  # open adminapi config
+  #     - "./janus/conf/janus.jcfg:/usr/local/etc/janus/janus.jcfg"
+  #     - "./janus/conf/janus.plugin.videoroom.jcfg:/usr/local/etc/janus/janus.plugin.videoroom.jcfg"   # Janus 설정 파일
+  #     - "./janus/conf/janus.transport.websockets.jcfg:/usr/local/etc/janus/janus.transport.websockets.jcfg"
+  #   ports:
+  #     - "8088:8088"  # HTTP API 포트
+  #     - "8188:8188"  # WebSocket API 포트
+  #     # - "8089:8089"  # HTTPS API 포트 (SSL)
+  #     - "10000-10200:10000-10200/udp" # WebRTC 미디어 포트
+  #     - "7088:7088"
+  #   # depends_on:
+  #   #   - nginx    # Nginx 의존성 설정 (옵셔널)
 
   certbot:
     depends_on:
