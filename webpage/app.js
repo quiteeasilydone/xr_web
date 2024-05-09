@@ -331,6 +331,7 @@ function generateJson() {
   const jsonData = new JsonData(infraName, inspectionList);
 
   const jsonOutputElement = document.getElementById("jsonOutput");
+  jsonOutputElement = "";
   jsonString = jsonData.toJsonString();
   jsonOutputElement.textContent = jsonString; // 들여쓰기 2로 설정하여 가독성 향상
   console.log(jsonString);
