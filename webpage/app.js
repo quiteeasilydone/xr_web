@@ -339,7 +339,7 @@ function generateJson() {
 
 function sendRequest(jsonData) {
   // HTTP POST 요청을 보낼 URL
-  const url = "http://rtctest.p-e.kr/api/submit";
+  const url = "https://rtctest.p-e.kr/api/reports";
 
   // HTTP 요청 옵션 설정
   const requestOptions = {
@@ -370,7 +370,7 @@ function sendRequest(jsonData) {
 
 function sendGetRequest() {
   // GET 요청을 보낼 URL
-  const url = "http://rtctest.p-e.kr/api/db-view";
+  const url = "https://rtctest.p-e.kr/api/infra/report";
 
   // Fetch API를 사용하여 HTTP GET 요청 보내기
   fetch(url)
