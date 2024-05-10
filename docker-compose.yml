@@ -32,7 +32,7 @@ services:
     container_name: api
     command: uvicorn main:app --host 0.0.0.0 --port 80
     environment:
-      DATABASE_URL: postgresql://flaskuser:flaskpassword@db/flaskdb
+      DATABASE_URL: postgresql://fastapiuser:fastapipassword@db/fastapidb
     depends_on:
       - db
 
@@ -45,9 +45,9 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_DB: "flaskdb"
-      POSTGRES_USER: "flaskuser"
-      POSTGRES_PASSWORD: "flaskpassword"
+      POSTGRES_DB: "fastapidb"
+      POSTGRES_USER: "fastapiuser"
+      POSTGRES_PASSWORD: "fastapipassword"
   
   pgadmin:
     container_name: pgadmin
