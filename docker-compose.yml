@@ -88,3 +88,15 @@ services:
       - ../jsy/certbot:/etc/letsencrypt
       - ./webpage:/usr/share/nginx/html
     command: certonly --webroot --webroot-path=/usr/share/nginx/html --email test@test.com --agree-tos --no-eff-email --keep-until-expiring -d rtctest.p-e.kr
+
+  coturn:
+    image: coturn/coturn:4.5.2
+    container_name: coturnserver
+    restart: always
+    ports:
+      - 3478:3478
+      - 3478:3478/udp
+      - 5349:5349
+      - 5349:5349/udp
+    volumes:
+      - ./coturn/turnserver.conf:/etc/coturn/turnserver.conf
