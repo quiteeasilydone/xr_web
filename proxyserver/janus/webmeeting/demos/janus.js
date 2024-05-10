@@ -1905,6 +1905,7 @@ function Janus(gatewayCallbacks) {
 			pc_config.encodedInsertableStreams = true;
 		}
 		Janus.log('Creating PeerConnection');
+		Janus.log(pc_config)
 		config.pc = new RTCPeerConnection(pc_config);
 		Janus.debug(config.pc);
 		if(config.pc.getStats) {	// FIXME

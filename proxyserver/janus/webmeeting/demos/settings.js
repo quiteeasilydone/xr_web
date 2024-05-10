@@ -84,3 +84,4 @@ else
 // janus.js will fallback to the Google STUN server by default:
 //
 var iceServers = null;
+iceServers = [{urls: "turn:165.246.44.125:3478", username: "test", credential: "test123"}]
