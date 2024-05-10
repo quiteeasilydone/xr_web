@@ -94,6 +94,6 @@ RUN  set -x \
 COPY ./conf /opt/janus/etc/janus
 
 RUN adduser --disabled-password --gecos '' janus
-USER janus
+USER root
 # RUN /opt/janus/bin/janus --v
 CMD ["/opt/janus/bin/janus"]

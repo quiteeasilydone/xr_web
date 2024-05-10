@@ -5,7 +5,6 @@
 # all the web servers will try and bind on both IPv4 and IPv6: if you
 # want to only bind to IPv4 addresses (e.g., because your system does not
 # support IPv6), you should set the web server 'ip' property to '0.0.0.0'.
-# To see debug logs from the HTTP server library, set 'mhd_debug'.
 general: {
 	#events = true					# Whether to notify event handlers about transport events (default=true)
 	json = "indented"				# Whether the JSON messages should be indented (default),
@@ -20,12 +19,7 @@ general: {
 	#secure_interface = "eth0"		# Whether we should bind this server to a specific interface only
 	#secure_ip = "192.168.0.1"		# Whether we should bind this server to a specific IP address (v4 or v6) only
 	#acl = "127.,192.168.0."		# Only allow requests coming from this comma separated list of addresses
-	#acl_forwarded = true			# Whether we should check the X-Forwarded-For header too for the ACL
-									# (default=false, since without a proxy in the middle this could be abused)
-	#mhd_connection_limit = 1020		# Open connections limit in libmicrohttpd (default=1020)
-	#mhd_debug = false					# Ask libmicrohttpd to write warning and error messages to stderr (default=false)
 }
-
 # Janus can also expose an admin/monitor endpoint, to allow you to check
 # which sessions are up, which handles they're managing, their current
 # status and so on. This provides a useful aid when debugging potential
@@ -46,12 +40,9 @@ admin: {
 	admin_https = false					# Whether to enable HTTPS (default=false)
 	#admin_secure_port = 7889			# Admin/monitor web server HTTPS port, if enabled
 	#admin_secure_interface = "eth0"	# Whether we should bind this server to a specific interface only
-	#admin_secure_ip = "192.168.0.1"	# Whether we should bind this server to a specific IP address (v4 or v6) only
+	#admin_secure_ip = "192.168.0.1		# Whether we should bind this server to a specific IP address (v4 or v6) only
 	#admin_acl = "127.,192.168.0."		# Only allow requests coming from this comma separated list of addresses
-	#admin_acl_forwarded = true			# Whether we should check the X-Forwarded-For header too for the admin ACL
-										# (default=false, since without a proxy in the middle this could be abused)
 }
-
 # The HTTP servers created in Janus support CORS out of the box, but by
 # default they return a wildcard (*) in the 'Access-Control-Allow-Origin'
 # header. This works fine in most situations, except when we have to
@@ -59,14 +50,9 @@ admin: {
 # you need that, uncomment and set the 'allow_origin' below to specify
 # what must be returned in 'Access-Control-Allow-Origin'. More details:
 # https://developer.mozilla.org/en-US/docs/Web/HTTP/Access_control_CORS
-# In case you want to enforce the Origin validation, rather than leave
-# it to browsers, you can set 'enforce_cors' to 'true' to have Janus
-# return a '403 Forbidden' for all requests that don't comply.
 cors: {
 	#allow_origin = "http://foo.example"
-	#enforce_cors = true
 }
-
 # Certificate and key to use for HTTPS, if enabled (and passphrase if needed).
 # You can also disable insecure protocols and ciphers by configuring the
 # 'ciphers' property accordingly (no limitation by default).
