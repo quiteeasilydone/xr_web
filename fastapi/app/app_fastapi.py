@@ -3,40 +3,31 @@ from fastapi.responses import JSONResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 import asyncpg
+import json
+import os
 
 app = FastAPI()
 
-app.mount("/static", StaticFiles(directory="static"), name="static")
+
 
 templates = Jinja2Templates(directory="templates")
 
 async def connect_db():
     conn = await asyncpg.connect(
-        dbname="flaskdb", user="flaskuser", password="flaskpassword", host="postgresdb"
+        os.environ['DATABASE_URL']
     )
     return conn
-
-@app.get("/api/", response_class=HTMLResponse)
-async def index(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
-
-@app.get("/api/document/", response_class=HTMLResponse)
-async def document(request: Request):
-    return templates.TemplateResponse("document.html", {"request": request})
-
-@app.get("/api/zoom/", response_class=HTMLResponse)
-async def zoom(request: Request):
-    print('zoom')
-    return templates.TemplateResponse("zoom.html", {"request": request})
 
 @app.post("/api/reports")
 async def db_submit(request: Request):
     data = await request.json()  # 클라이언트로부터 받은 JSON 데이터
+    data = json.loads(data)
+    print(data)
 
     # json data parsing
     infra_id = data.get('infra', None) # json data 'infra' field
-    start_time = '0000'
-    end_time = '0000'
+    start_time =0000
+    end_time = 0000
     client_id = '0000'
 
     if not infra_id:
@@ -48,6 +39,11 @@ async def db_submit(request: Request):
     ## postgres SQL
     # Insert into reports
     report_id = await conn.fetchval('INSERT INTO reports ("infra", "start_time", "end_time", "client_id") VALUES ($1, $2, $3, $4) RETURNING report_id', infra_id, start_time, end_time, client_id)
+
+    print()
+    print(type(data))
+    print()
+
 
     # inspectionList의 각 topic에 대해 처리
     for inspection in data.get('inspection_list', []):  # json data 'inspectionList' field
