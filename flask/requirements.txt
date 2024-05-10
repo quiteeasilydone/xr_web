@@ -1,5 +1,0 @@
-flask
-gunicorn
-Flask-SocketIO
-eventlet
-psycopg2-binary
