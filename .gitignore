@@ -179,4 +179,3 @@ cython_debug/
 
 pgadmin/
 certbot/
-db/
