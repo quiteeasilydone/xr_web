@@ -56,8 +56,8 @@ services:
     restart: unless-stopped
     ports:
       - "5555:80"
-    volumes:
-      - ./pgadmin:/var/lib/pgadmin
+    # volumes:
+    #   - ./pgadmin:/var/lib/pgadmin
     environment:
       - PGADMIN_DEFAULT_EMAIL=example@pgadmin.com
       - PGADMIN_DEFAULT_PASSWORD=pgadmin
