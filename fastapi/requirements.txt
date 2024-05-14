@@ -1,5 +1,10 @@
 fastapi
 uvicorn
-python-socketio
-eventlet
 asyncpg
+pytz
+Minio
+requests
+python-multipart
+python-jose[cryptography]
+pydantic
+typing
