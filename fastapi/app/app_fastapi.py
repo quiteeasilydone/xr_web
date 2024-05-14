@@ -11,23 +11,6 @@ import pytz
 import json
 import io
 
-fake_users_db = {
-    "johndoe": {
-        "username": "johndoe",
-        "full_name": "John Doe",
-        "email": "johndoe@example.com",
-        "hashed_password": "fakehashedsecret",
-        "disabled": False,
-    },
-    "alice": {
-        "username": "alice",
-        "full_name": "Alice Wonderson",
-        "email": "alice@example.com",
-        "hashed_password": "fakehashedsecret2",
-        "disabled": True,
-    },
-}
-
 ## FASTAPI application 생성
 app = FastAPI()
 
@@ -412,17 +395,27 @@ async def get_report_forms(request: Request, infra: str = None, report_form_id: 
 
         # Retrieve report form data
         report_form_data = await conn.fetch('''
-            SELECT t.topic_form_name, t.image_required, array_agg(json_build_object(
-                'instruction', i.instruction,
-                'instruction_type', i.instruction_type,
-                'options', i.options,
-                'answer', null
-            )) AS instruction_list
-            FROM topic_forms t
-            JOIN instruction_forms i ON t.topic_form_id = i.topic_form_id
-            WHERE t.report_form_id = $1
-            GROUP BY t.topic_form_name, t.image_required
+            SELECT 
+                t.topic_form_name, 
+                t.image_required, 
+                array_agg(
+                    json_build_object(
+                        'instruction', i.instruction,
+                        'instruction_type', i.instruction_type,
+                        'options', i.options,
+                        'answer', i.answer
+                    )
+                ) AS instruction_list
+            FROM 
+                topic_forms t
+            JOIN 
+                instruction_forms i ON t.topic_form_id = i.topic_form_id
+            WHERE 
+                t.report_form_id = $1
+            GROUP BY 
+                t.topic_form_name, t.image_required
         ''', report_form_id)
+        print(report_form_data)
 
         if not report_form_data:
             raise HTTPException(status_code=404, detail=f"No report form data found for report form id '{report_form_id}'")
@@ -431,15 +424,26 @@ async def get_report_forms(request: Request, infra: str = None, report_form_id: 
         response_data = {
             "infra_name": infra_name,
             "report_form_id": report_form_id,
-            "inspection_list": [
-                {
-                    "topic": row['topic_form_name'],
-                    "instruction_list": row['instruction_list'],
-                    "image_required": row['image_required']
-                }
-                for row in report_form_data
-            ]
+            "inspection_list": []
         }
+        for record in report_form_data:
+            inspection = {
+                "topic": record['topic_form_name'],
+                "instruction_list": [],
+                "image_required": record['image_required']
+            }
+            for instruction_json in record['instruction_list']:
+                instruction = json.loads(instruction_json)
+                instruction_data = {
+                    "instruction": instruction['instruction'],
+                    "instruction_type": instruction['instruction_type'],
+                    "options": instruction['options'],
+                    "answer": None
+                }
+                inspection["instruction_list"].append(instruction_data)
+            response_data["inspection_list"].append(inspection)
+
+
 
         await conn.close()
         return JSONResponse(content=response_data, status_code=200)

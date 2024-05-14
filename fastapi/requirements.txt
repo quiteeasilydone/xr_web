@@ -6,5 +6,3 @@ Minio
 requests
 python-multipart
 python-jose[cryptography]
-pydantic
-typing
