@@ -3,27 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>보고서 제작 시스템</title>
+    <title>랜딩 페이지</title>
     <link rel="stylesheet" type="text/css" href="styles.css" />
   </head>
   <body>
-    <div id="container">
-      <label for="infraInput">설비명:</label>
-
-      <input type="text" id="infraInput" list="infra-list" />
-      <datalist id="infra-list">
-        <option value="test_name_1"></option>
-        <option value="test_name_2"></option>
-        <option value="test_name_3"></option>
-      </datalist>
-      <button id="addTopicBtn">내용 추가</button>
-    </div>
-    <div class="buttonContainer">
-      <button id="generateJsonBtn">보고서 양식 저장</button>
-    </div>
-    <div id="jsonOutput"></div>
-
-    <!-- <button id="generateJsonBtn">보고서 양식 저장</button> -->
+    <h1>랜딩 페이지</h1>
+    <button onclick="window.location.href = '/login'">로그인</button>
     <script src="app.js"></script>
   </body>
 </html>

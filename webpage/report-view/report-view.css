@@ -1,0 +1,42 @@
+body {
+    font-family: Arial, sans-serif;
+  }
+  
+  #report-view-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+  }
+  
+  #infra-name {
+    font-size: 24px;
+    margin-bottom: 20px;
+  }
+  
+  .date-button {
+    margin-top: 10px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    background-color: #007bff;
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  
+  #date-list {
+    max-height: 300px; /* 높이를 기준으로 스크롤 가능하도록 설정 */
+    overflow-y: auto; /* 세로 스크롤을 가능하도록 설정 */
+    overflow-x: hidden; /* 가로 스크롤을 감춥니다 */
+  }
+  
+  .date-button:hover {
+    background-color: #0056b3;
+  }
+  

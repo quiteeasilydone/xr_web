@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>보고서 제작 시스템</title>
+    <link rel="stylesheet" type="text/css" href="../styles.css" />
+    <link rel="stylesheet" type="text/css" href="report.css" />
+  </head>
+  <body>
+    <div id="report-container">
+      <label for="infraInput">설비명:</label>
+
+      <input type="text" id="infraInput" list="infra-list" />
+      <datalist id="infra-list">
+        <option value="test_name_1"></option>
+        <option value="test_name_2"></option>
+        <option value="test_name_3"></option>
+      </datalist>
+      <button id="addTopicBtn">내용 추가</button>
+    </div>
+    <div class="buttonContainer">
+      <button id="generateJsonBtn">보고서 양식 저장</button>
+    </div>
+    <div id="jsonOutput"></div>
+
+    <script src="report.js"></script>
+  </body>
+</html>

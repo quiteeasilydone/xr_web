@@ -61,6 +61,8 @@ class JsonData {
 let inspectionList = [];
 let jsonString;
 
+let jsonData;
+
 // 새로운 토픽을 추가하는 함수
 function addTopic() {
   const topicElement = document.createElement("div"); // 새로운 토픽 요소 생성
@@ -290,10 +292,23 @@ function getOptions(instructionElement, instructionType) {
   return options;
 }
 
+function createReports(){
+  if(jsonData == null){
+    console.log("jsonData가 없네요!");
+    generateJson();
+  }
+
+  const jsonOutputElement = document.getElementById("jsonOutput");
+  jsonString = jsonData.toJsonString();
+  jsonOutputElement.textContent = jsonString; // 들여쓰기 2로 설정하여 가독성 향상
+  console.log(jsonString);
+  sendRequest(jsonString);
+}
+
 // JSON을 생성하고 화면에 표시하는 함수
 function generateJson() {
-  const infraName = document.getElementById("infraInput").value;
 
+  const infraName = document.getElementById("infraInput").value;
   const topicElements = document.querySelectorAll(".topic"); // topicInput 클래스에 속한 요소들 가져오기
 
   // 각 토픽 요소를 순회하며 정보를 가져오기
@@ -328,16 +343,12 @@ function generateJson() {
     inspectionList.push(inspection);
   });
 
-  const jsonData = new JsonData(infraName, inspectionList);
-
-  const jsonOutputElement = document.getElementById("jsonOutput");
-  jsonString = jsonData.toJsonString();
-  jsonOutputElement.textContent = jsonString; // 들여쓰기 2로 설정하여 가독성 향상
-  console.log(jsonString);
-  sendRequest(jsonString);
+  jsonData = new JsonData(infraName, inspectionList);
+  console.log("생성완료");
 }
 
 function sendRequest(jsonData) {
+  console.log("SEND");
   // HTTP POST 요청을 보낼 URL
   const url = "https://rtctest.p-e.kr/api/reports";
 
@@ -403,6 +414,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // "Generate Json" 버튼 클릭 시 실행될 함수
   generateJsonBtn.addEventListener("click", function () {
-    generateJson();
+    console.log('heyhey');
+    // generateJson();
+    //createReports();
   });
 });

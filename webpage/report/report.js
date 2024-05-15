@@ -1,8 +1,8 @@
 class Inspection {
     constructor(topic, instructionList, imageRequired) {
       this.topic = topic;
-      this.instruction_list = instructionList;
-      this.image_required = imageRequired;
+      this.instructionList = instructionList;
+      this.imageRequired = imageRequired;
     }
   
     changeTopicName(topic) {
@@ -11,7 +11,7 @@ class Inspection {
   
     // Instruction 객체를 추가하는 함수
     addInstruction(instruction) {
-      this.instruction_list.push(instruction);
+      this.instructionList.push(instruction);
     }
   
     setInstruction(instructionList) {}
@@ -20,7 +20,7 @@ class Inspection {
   class Instruction {
     constructor(instruction, instructionType, options, answer) {
       this.instruction = instruction;
-      this.instruction_type = instructionType;
+      this.instructionType = instructionType;
   
       console.log(options);
       console.log(answer);
@@ -38,9 +38,9 @@ class Inspection {
       }
     }
     createDefaultAnswer() {
-      console.log(this.instruction_type);
-      if (this.instruction_type == "check") return ["true"];
-      else if (this.instruction_type == "numericInput") return ["0"];
+      console.log(this.instructionType);
+      if (this.instructionType == "check") return ["true"];
+      else if (this.instructionType == "numericInput") return ["0"];
       else {
         return [this.options[0]];
       }
@@ -50,7 +50,7 @@ class Inspection {
   class JsonData {
     constructor(infra, inspectionList) {
       this.infra = infra;
-      this.inspection_list = inspectionList;
+      this.inspectionList = inspectionList;
     }
   
     toJsonString() {
@@ -60,6 +60,8 @@ class Inspection {
   
   let inspectionList = [];
   let jsonString;
+  let jsonData;
+  let container;
   
   // 새로운 토픽을 추가하는 함수
   function addTopic() {
@@ -78,17 +80,27 @@ class Inspection {
     topicNameInput.classList.add("topicInput"); // 클래스 추가
   
     // "Add Instruction" 버튼 텍스트 설정
-    addInstructionBtn.textContent = "Add Instruction";
+    addInstructionBtn.textContent = "항목 추가";
     addInstructionBtn.classList.add("addInstructionBtn"); // 클래스 추가
   
     // Instruction 토글 버튼 텍스트 및 속성 설정
-    toggleInstructionsBtn.textContent = "Toggle Instructions";
+    toggleInstructionsBtn.textContent = "내용 숨기기/보이기";
     toggleInstructionsBtn.classList.add("toggleInstructionBtn"); // 클래스 추가
+  
+    //임시 삭제 버튼
+    const deleteBtn = document.createElement("button");
+    deleteBtn.textContent = "삭제";
+    deleteBtn.classList.add("delete-btn");
+    deleteBtn.addEventListener("click", function () {
+      // 삭제 버튼 클릭 시 해당 input을 포함한 부모 요소를 삭제합니다.
+      topicElement.remove();
+    });
   
     // 생성한 요소들을 토픽 요소에 추가
     topicElement.appendChild(topicNameInput);
     topicElement.appendChild(addInstructionBtn);
     topicElement.appendChild(toggleInstructionsBtn); // 토글 버튼 추가
+    topicElement.appendChild(deleteBtn); // 삭제 버튼 추가
     topicElement.appendChild(instructionContainer); // 지시사항 컨테이너를 토픽 요소에 추가
     container.appendChild(topicElement); // 토픽 요소를 컨테이너에 추가
   
@@ -118,6 +130,15 @@ class Inspection {
     const instructionInput = document.createElement("input"); // 지시사항 입력 필드 생성
     const instructionTypeSelect = document.createElement("select"); // instructionType 선택 셀렉트 태그 생성
   
+    //임시 삭제 버튼
+    const deleteBtn = document.createElement("button");
+    deleteBtn.textContent = "삭제";
+    deleteBtn.classList.add("delete-btn");
+    deleteBtn.addEventListener("click", function () {
+      // 삭제 버튼 클릭 시 해당 input을 포함한 부모 요소를 삭제합니다.
+      instructionElement.remove();
+    });
+  
     const options = document.createElement("div"); // 옵션 div 생성
     options.classList.add("options");
     const optionsContainer = document.createElement("div"); // 옵션 리스트 컨테이너 생성
@@ -126,16 +147,21 @@ class Inspection {
   
     // 옵션에 새 원소를 추가하는 버튼
     const addOptionBtn = document.createElement("button");
-    addOptionBtn.textContent = "Add Option";
+    addOptionBtn.textContent = "선택지 추가";
     addOptionBtn.classList.add("addOptionBtn");
   
     // 옵션 리스트를 숨김/보임 토글하는 버튼
     const toggleOptionsBtn = document.createElement("button");
-    toggleOptionsBtn.textContent = "Toggle Options";
+    toggleOptionsBtn.textContent = "선택지 숨기기/보이기";
     toggleOptionsBtn.classList.add("toggleOptionBtn");
   
+    // "Toggle Instructions" 버튼 클릭 시 실행될 함수
+    toggleOptionsBtn.addEventListener("click", function () {
+      toggleOptions(instructionContainer);
+    });
+  
     optionsContainer.appendChild(addOptionBtn);
-    optionsContainer.appendChild(toggleOptionsBtn);
+    //optionsContainer.appendChild(toggleOptionsBtn);
   
     instructionElement.classList.add("instruction");
   
@@ -195,6 +221,7 @@ class Inspection {
     // 생성한 요소들을 지시사항 요소에 추가
     instructionElement.appendChild(instructionInput);
     instructionElement.appendChild(instructionTypeSelect);
+    instructionElement.appendChild(deleteBtn);
     instructionContainer.appendChild(instructionElement); // 지시사항을 토픽 요소의 컨테이너에 추가
     instructionElement.appendChild(optionsContainer);
   
@@ -202,6 +229,16 @@ class Inspection {
       addOption(optionsContainer);
     });
     optionsContainer.style.display = "none";
+  }
+  
+  // 선택지 숨기기/보이기 토글 함수
+  function toggleOptions(optionContainer) {
+    // instructionContainer의 display 속성을 토글하여 숨기거나 보여줌
+    if (optionContainer.style.display === "none") {
+      optionContainer.style.display = "block";
+    } else {
+      optionContainer.style.display = "none";
+    }
   }
   
   function addOption(optionsContainer) {
@@ -255,6 +292,15 @@ class Inspection {
     return options;
   }
   
+  function saveReportForm() {
+    if (jsonData == null) {
+      console.log("새로 생성");
+      generateJson();
+    }
+  
+    sendRequest(jsonData);
+  }
+  
   // JSON을 생성하고 화면에 표시하는 함수
   function generateJson() {
     const infraName = document.getElementById("infraInput").value;
@@ -293,7 +339,7 @@ class Inspection {
       inspectionList.push(inspection);
     });
   
-    const jsonData = new JsonData(infraName, inspectionList);
+    jsonData = new JsonData(infraName, inspectionList);
   
     const jsonOutputElement = document.getElementById("jsonOutput");
     jsonString = jsonData.toJsonString();
@@ -301,10 +347,10 @@ class Inspection {
     console.log(jsonString);
     sendRequest(jsonString);
   }
-
+  
   function sendRequest(jsonData) {
     // HTTP POST 요청을 보낼 URL
-    const url = "/api/db-submit";
+    const url = "http://rtctest.p-e.kr/api/submit";
   
     // HTTP 요청 옵션 설정
     const requestOptions = {
@@ -312,7 +358,7 @@ class Inspection {
       headers: {
         "Content-Type": "application/json",
       },
-      body: jsonData,
+      body: JSON.stringify(jsonData),
     };
   
     // Fetch API를 사용하여 HTTP 요청 보내기
@@ -335,8 +381,8 @@ class Inspection {
   
   function sendGetRequest() {
     // GET 요청을 보낼 URL
-    const url = "/api/db-view";
-    
+    const url = "http://rtctest.p-e.kr/api/db-view";
+  
     // Fetch API를 사용하여 HTTP GET 요청 보내기
     fetch(url)
       .then((response) => {
@@ -357,7 +403,9 @@ class Inspection {
   
   // HTML 문서가 로드되면 실행됨
   document.addEventListener("DOMContentLoaded", function () {
-    const container = document.getElementById("container");
+    console.log("abc");
+    container = document.getElementById("report-container");
+    console.log(container);
     const addTopicBtn = document.getElementById("addTopicBtn");
     const generateJsonBtn = document.getElementById("generateJsonBtn");
   
@@ -368,7 +416,8 @@ class Inspection {
   
     // "Generate Json" 버튼 클릭 시 실행될 함수
     generateJsonBtn.addEventListener("click", function () {
-      generateJson();
+      saveReportForm();
+      //generateJson();
     });
   });
   

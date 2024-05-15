@@ -33,13 +33,13 @@ services:
     command: uvicorn main:app --host 0.0.0.0 --port 80
     environment:
       DATABASE_URL: postgresql://fastapiuser:fastapipassword@db/fastapidb
-      MINIO_ENDPOINT: xr-storage.atgdevs.com:9000
+      MINIO_ENDPOINT: xr-s3.atgdevs.com:443
       MINIO_ACCESS_KEY: minio
       MINIO_SECRET_KEY: inha_storage
       MINIO_BUCKET: inspected-reports
       XR_WEB_SERVER_GOOGLE_CLIENT_ID: 344730349691-8kddgtg8uh8ijrl86dneb2aguanl7tou.apps.googleusercontent.com
-      XR_WEB_SERVER_GOOGLE_REDIRECT_URI: https://rtctest.p-e.kr/home.html
       XR_WEB_SERVER_GOOGLE_CLIENT_SECRET: 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
+      XR_WEB_SERVER_GOOGLE_REDIRECT_URI: https://rtctest.p-e.kr/home.html
     depends_on:
       - db
 

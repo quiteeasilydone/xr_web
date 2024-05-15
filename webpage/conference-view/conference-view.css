@@ -1,0 +1,20 @@
+#conference-list {
+    margin-top: 20px;
+    max-height: 300px; /* 높이를 기준으로 스크롤 가능하도록 설정 */
+    overflow-y: auto; /* 세로 스크롤을 가능하도록 설정 */
+    overflow-x: hidden; /* 가로 스크롤을 감춥니다 */
+  }
+  
+  .conference-item {
+    margin-bottom: 10px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #fff;
+    cursor: pointer;
+  }
+  
+  .conference-item:hover {
+    background-color: #f0f0f0;
+  }
+  

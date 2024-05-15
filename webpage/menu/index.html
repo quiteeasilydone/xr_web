@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>메뉴 페이지</title>
+    <link rel="stylesheet" type="text/css" href="../styles.css" />
+    <link rel="stylesheet" type="text/css" href="menu.css" />
+  </head>
+  <body>
+    <div id="container">
+      <div id="menu-message">Please select menu</div>
+      <button class="menu-button" onclick="redirectToProcedure()">
+        점검절차 생성
+      </button>
+      <button class="menu-button" onclick="redirectToReport()">
+        보고서 확인
+      </button>
+      <button class="menu-button" onclick="redirectToConference()">
+        화상회의
+      </button>
+    </div>
+
+    <script>
+      function redirectToProcedure() {
+        window.location.href = "/report";
+      }
+
+      function redirectToReport() {
+        window.location.href = "/infra";
+      }
+
+      function redirectToConference() {
+        window.location.href = "/conference-view";
+      }
+    </script>
+  </body>
+</html>
