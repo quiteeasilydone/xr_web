@@ -2,6 +2,8 @@ from fastapi import APIRouter
 from fastapi import FastAPI, Request, HTTPException, Depends
 from fastapi.responses import JSONResponse
 from db import postgres_connection
+from schemas import reponse_body
+
 import json
 
 router = APIRouter()
@@ -9,11 +11,10 @@ router = APIRouter()
 
 # 보고서(양식) 정보 입력
 @router.post("/api/reports")
-async def db_submit(request: Request):
-    data = await request.json()  # 클라이언트로부터 받은 JSON 데이터
+async def db_submit(request: Request, data: reponse_body.report_form):
 
     # json data parsing
-    infra_name = data.get('infra', None) # json data 'infra' field
+    infra_name = data.infra
 
     # 임시 user_name 0000
     user_name = "0000"
@@ -47,7 +48,7 @@ async def db_submit(request: Request):
         ''', infra_id, user_name)
 
         # inspectionList의 각 topic에 대해 처리
-        for inspection in data.get('inspection_list', []):  # json data 'inspectionList' field
+        for inspection in data.inspection_list:  # json data 'inspectionList' field
             topic_name = inspection['topic']
             image_required = inspection['image_required']
             
@@ -74,6 +75,7 @@ async def db_submit(request: Request):
         await conn.close()
         return JSONResponse(content={"message": "Data saved successfully"}, status_code=200)
     except Exception as e:
+        # 예외 발생시 데이터베이스 연결 종료 후 예외 발생
         await conn.close()
         raise HTTPException(status_code=500, detail=f"Error saving data: {str(e)}")
 

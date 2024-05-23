@@ -39,7 +39,7 @@ services:
       MINIO_BUCKET: inspected-reports
       XR_WEB_SERVER_GOOGLE_CLIENT_ID: 344730349691-8kddgtg8uh8ijrl86dneb2aguanl7tou.apps.googleusercontent.com
       XR_WEB_SERVER_GOOGLE_CLIENT_SECRET: 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
-      XR_WEB_SERVER_GOOGLE_REDIRECT_URI: https://rtctest.p-e.kr/home.html
+      XR_WEB_SERVER_GOOGLE_REDIRECT_URI: https://rtctest.p-e.kr/menu
     depends_on:
       - db
 

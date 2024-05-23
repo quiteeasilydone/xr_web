@@ -22,9 +22,5 @@ app.include_router(posted_reports.router, tags=["posted_reports"])
 app.include_router(reports.router, tags=["reports"])
 app.include_router(users.router, tags=["users"])
 
-@app.get('/api/yeah')
-def home():
-    return {'msg':'Main'}
-
 if __name__ == "__main__":
     run(app, host='0.0.0.0', port=80)

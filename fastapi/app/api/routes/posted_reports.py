@@ -3,6 +3,7 @@ from fastapi import FastAPI, Request, HTTPException, Depends
 from fastapi.responses import JSONResponse
 from db import minio_connection
 from db import postgres_connection
+from schemas import reponse_body
 import pytz
 import os
 import json
@@ -98,16 +99,16 @@ async def get_posted_reports(request: Request, infra: str = None, Unixtime: int 
 
 # 점검 완료 결과를 DB 및 minIO에 저장
 @router.post("/api/report")
-async def submit_report(request: Request):
+async def submit_inspected_report(request: Request, data: reponse_body.InspectedReport):
     try:
-        data = await request.json()
-    # Extract data from JSON
-        start_time = int(data.get('start_time'))
-        end_time = int(data.get('end_time'))
-        report_form_id = int(data.get('report_form_id'))
-        infra_name = data.get('infra')
-        inspection_list = data.get('inspection_list')
-    # Connect to the database
+        # Extract data from JSON
+        start_time = int(data.start_time)
+        end_time = int(data.end_time)
+        report_form_id = int(data.report_form_id)
+        infra_name = data.infra
+        inspection_list = data.inspection_list
+        
+        # Connect to the database
         conn = await postgres_connection.connect_db()
 
         last_posted_report_id = await conn.fetchval('''
@@ -129,7 +130,7 @@ async def submit_report(request: Request):
         # 2
         # Save original JSON data to MinIO bucket
         # 파일명: {posted_report_id}.json
-        data_json = json.dumps(data)
+        data_json = json.dumps(data.dict())
         file_name = f"{posted_report_id}.json"
         with io.BytesIO(data_json.encode('utf-8')) as data_file:
             minio_connection.minio_client.put_object(os.environ['MINIO_BUCKET'], file_name, data_file, length=-1, part_size=10*1024*1024, content_type="application/json")
