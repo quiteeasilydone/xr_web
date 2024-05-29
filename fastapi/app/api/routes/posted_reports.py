@@ -3,7 +3,7 @@ from fastapi import FastAPI, Request, HTTPException, Depends
 from fastapi.responses import JSONResponse
 from db import minio_connection
 from db import postgres_connection
-from schemas import reponse_body
+from schemas import response_body
 import pytz
 import os
 import json
@@ -97,9 +97,39 @@ async def get_posted_reports(request: Request, infra: str = None, Unixtime: int 
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
+# minio에 저장된 특정 보고서 하나 가져오기
+@router.get("/api/posted-report")
+async def get_posted_report_from_minio(request: Request, posted_report_id: int = None):
+    
+    # posted_report_id 파라미터 확인
+    if not posted_report_id:
+        raise HTTPException(status_code=400, detail="posted_report_id is missing in query parameters")
+
+    try:
+        bucket_name = os.environ['MINIO_BUCKET']
+        file_name = f"{posted_report_id}.json"
+        file_path = f"/{bucket_name}/{file_name}"
+        response = minio_connection.minio_client.get_object(bucket_name, file_name)
+
+         # 파일 데이터를 읽어서 반환
+        data = response.read()
+        response.close()
+        response.release_conn()
+
+        # 바이트 데이터를 문자열로 디코딩 (JSON 형식 가정)
+        data_str = data.decode('utf-8')
+
+        # JSON 문자열을 파이썬 딕셔너리로 변환
+        report_data = json.loads(data_str)
+
+        return JSONResponse(content={"message": "Report fetched successfully", "report": report_data}, status_code=200)
+
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+
 # 점검 완료 결과를 DB 및 minIO에 저장
 @router.post("/api/report")
-async def submit_inspected_report(request: Request, data: reponse_body.InspectedReport):
+async def submit_inspected_report(request: Request, data: response_body.InspectedReport):
     try:
         # Extract data from JSON
         start_time = int(data.start_time)

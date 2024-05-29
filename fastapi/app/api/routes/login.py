@@ -2,11 +2,16 @@ from fastapi import APIRouter
 from fastapi.security import OAuth2PasswordBearer
 from fastapi import FastAPI, Request, HTTPException, Depends
 from jose import jwt
+from db import postgres_connection
+from starlette.status import HTTP_202_ACCEPTED
+from schemas import request_body
 
 import os
 import requests
 
 router = APIRouter()
+
+
 
 
 ## 구글 SSO 연동
@@ -44,3 +49,70 @@ async def auth_google(code: str):
 @router.get("/api/token")
 async def get_token(token: str = Depends(oauth2_scheme)):
     return jwt.decode(token, GOOGLE_CLIENT_SECRET, algorithms=["HS256"])
+
+# 회원가입
+@router.post("/api/sign-up")
+async def sign_up(request: request_body.SignUpRequest):
+    conn = await postgres_connection.connect_db()
+    # body에 email, user_name, employee_identification_number 담아옴
+    # 이걸 DB user table에 저장
+    # 이미 row 있으면 저장 안하고 http status code 202 돌려주면서 에러 메세지도 돌려줌
+    # 202 - Accepted - 허용됨 - 요청은 접수하였지만, 처리가 완료되지 않았다. 응답 헤더의 Location, Retry-After를 참고하여 클라이언트는 다시 요청을 보냅니다.
+    try:
+        # 사용자 존재 여부 확인
+        existing_user = await conn.fetchrow(
+            "SELECT user_id FROM users WHERE email = $1 OR employee_identification_number = $2",
+            request.email, request.employee_identification_number
+        )
+        if existing_user:
+            await conn.close()
+            raise HTTPException(
+                status_code=HTTP_202_ACCEPTED,
+                detail="User with this email or employee identification number already exists."
+            )
+
+        # 새로운 사용자 삽입
+        await conn.execute(
+            "INSERT INTO users (email, user_name, employee_identification_number) VALUES ($1, $2, $3)",
+            request.email, request.user_name, request.employee_identification_number
+        )
+        await conn.close()
+
+        return {"message": "User registered successfully"}
+    except Exception as e:
+        await conn.close()
+        raise HTTPException(status_code=500, detail=f"Error registering user: {str(e)}")
+
+# 로그인
+@router.post("/api/login")
+async def login(request: request_body.LoginRequest):
+    conn = await postgres_connection.connect_db()
+    # body에 email 담아서 받음
+    
+    # DB에 email이 있으면(회원가입 된 상태면), 이름이랑 사원번호 돌려 줌
+    # DB에 email이 없으면 401 Unauthorized 돌려줌
+    # 클라이언트는 이걸 받고 회원가입하라고 리다이렉션
+    try:
+        # 사용자 정보 조회
+        user = await conn.fetchrow(
+            "SELECT user_name, employee_identification_number FROM users WHERE email = $1",
+            request.email
+        )
+        await conn.close()
+
+        if user:
+            return {
+                "user_name": user['user_name'],
+                "employee_identification_number": user['employee_identification_number']
+            }
+        else:
+            raise HTTPException(
+                status_code=HTTP_401_UNAUTHORIZED,
+                detail="Email not registered. Please sign up."
+            )
+    except Exception as e:
+        await conn.close()
+        raise HTTPException(status_code=500, detail=f"Error during login: {str(e)}")
+
+
+

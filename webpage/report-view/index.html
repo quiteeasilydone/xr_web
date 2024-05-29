@@ -3,11 +3,26 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>보고서 보기 페이지</title>
+    <title>보고서 보기 페이지(작업중)</title>
     <link rel="stylesheet" type="text/css" href="../styles.css" />
     <link rel="stylesheet" type="text/css" href="report-view.css" />
+    <style>
+      #user-info {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        text-align: right;
+      }
+      #user-info span {
+        display: block;
+      }
+    </style>
   </head>
   <body>
+    <div id="user-info">
+      <span id="user-email"></span>
+      <span id="user-name"></span>
+    </div>
     <div id="container">
       <h2 id="infra-name">설비 이름</h2>
       <div id="date-list">
@@ -15,6 +30,7 @@
       </div>
     </div>
 
+    <script src="../user-info.js"></script>
     <script src="report-view.js"></script>
   </body>
 </html>

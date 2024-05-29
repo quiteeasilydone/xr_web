@@ -6,17 +6,32 @@
     <title>보고서 제작 시스템</title>
     <link rel="stylesheet" type="text/css" href="../styles.css" />
     <link rel="stylesheet" type="text/css" href="report.css" />
+    <style>
+      #user-info {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        text-align: right;
+      }
+      #user-info span {
+        display: block;
+      }
+    </style>
   </head>
   <body>
+    <div id="user-info">
+      <span id="user-email"></span>
+      <span id="user-name"></span>
+    </div>
     <div id="report-container">
       <label for="infraInput">설비명:</label>
 
-      <input type="text" id="infraInput" list="infra-list" />
-      <datalist id="infra-list">
-        <option value="test_name_1"></option>
-        <option value="test_name_2"></option>
-        <option value="test_name_3"></option>
-      </datalist>
+      <!-- <input type="text" id="infraInput" list="infra-list" />
+      <datalist id="infra-list"> </datalist> -->
+      <select id="infraSelect">
+        <option value="0513kimn2">0513kimn2</option>
+        <option value="anotherOption">Another Option</option>
+      </select>
       <button id="addTopicBtn">내용 추가</button>
     </div>
     <div class="buttonContainer">
@@ -24,6 +39,7 @@
     </div>
     <div id="jsonOutput"></div>
 
+    <script src="../user-info.js"></script>
     <script src="report.js"></script>
   </body>
 </html>

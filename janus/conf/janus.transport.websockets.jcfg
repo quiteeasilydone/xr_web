@@ -39,8 +39,8 @@ admin: {
 # 'ciphers' property accordingly (no limitation by default).
 # Examples of recommended cipher strings at https://cheatsheetseries.owasp.org/cheatsheets/TLS_Cipher_String_Cheat_Sheet.html
 certificates: {
-	#cert_pem = "/etc/letsencrypt/live/nimbus-cert/fullchain.pem"
-	#cert_key = "/etc/letsencrypt/live/nimbus-cert/privkey.pem"
+	#cert_pem = "/etc/letsencrypt/live/rtctest.p-e.kr/fullchain.pem"
+	#cert_key = "/etc/letsencrypt/live/rtctest.p-e.kr/privkey.pem"
 	#cert_pwd = "nimbus0425"
 	#ciphers = "ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256"
 }

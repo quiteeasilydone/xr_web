@@ -6,8 +6,23 @@
     <title>메뉴 페이지</title>
     <link rel="stylesheet" type="text/css" href="../styles.css" />
     <link rel="stylesheet" type="text/css" href="menu.css" />
+    <style>
+      #user-info {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        text-align: right;
+      }
+      #user-info span {
+        display: block;
+      }
+    </style>
   </head>
   <body>
+    <div id="user-info">
+      <span id="user-email"></span>
+      <span id="user-name"></span>
+    </div>
     <div id="container">
       <div id="menu-message">Please select menu</div>
       <button class="menu-button" onclick="redirectToProcedure()">
@@ -33,6 +48,27 @@
       function redirectToConference() {
         window.location.href = "/conference-view";
       }
+
+      // 쿠키 값을 읽는 함수
+      function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(";").shift();
+      }
+
+      // 페이지 로드 시 이메일과 이름을 표시
+      document.addEventListener("DOMContentLoaded", () => {
+        const email = getCookie("email");
+        const name = getCookie("name");
+
+        if (email) {
+          document.getElementById("user-email").textContent = `Email: ${email}`;
+        }
+
+        if (name) {
+          document.getElementById("user-name").textContent = `Name: ${name}`;
+        }
+      });
     </script>
   </body>
 </html>

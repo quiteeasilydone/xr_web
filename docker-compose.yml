@@ -39,7 +39,7 @@ services:
       MINIO_BUCKET: inspected-reports
       XR_WEB_SERVER_GOOGLE_CLIENT_ID: 344730349691-8kddgtg8uh8ijrl86dneb2aguanl7tou.apps.googleusercontent.com
       XR_WEB_SERVER_GOOGLE_CLIENT_SECRET: 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
-      XR_WEB_SERVER_GOOGLE_REDIRECT_URI: https://rtctest.p-e.kr/menu
+      XR_WEB_SERVER_GOOGLE_REDIRECT_URI: https://rtctest.p-e.kr/auth
     depends_on:
       - db
 
@@ -77,12 +77,13 @@ services:
         dockerfile: Dockerfile
       restart: always
       container_name: janus
-      # volumes:
-      #   - ./janus/log/:/var/log/
+      volumes:
+        - ../jsy/certbot:/etc/letsencrypt
       ports:
         - 7088:7088
         - 8088:8088
         - 8188:8188
+        - 8989:8989
         - 10000-10030:10000-10030/udp
 
   certbot:

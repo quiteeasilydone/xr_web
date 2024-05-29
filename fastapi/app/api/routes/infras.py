@@ -28,10 +28,10 @@ async def db_view(request: Request, infra: str = None):
         if not report:
             raise HTTPException(status_code=404, detail=f'No reports found for infra name: {infra}')
 
-        report_id = report[0]  # 튜플의 첫 번째 요소는 report_id
+        report_form_id = report[0]  # 튜플의 첫 번째 요소는 report_form_id
 
         # 카테고리 및 해당하는 주제와 지시사항 조회
-        topic_data = await conn.fetch('SELECT * FROM topic_forms WHERE report_form_id = $1', report_id)
+        topic_data = await conn.fetch('SELECT * FROM topic_forms WHERE report_form_id = $1', report_form_id)
 
         # 보고서 내용을 담을 리스트 생성
         inspection_list = []
@@ -63,7 +63,7 @@ async def db_view(request: Request, infra: str = None):
         # JSON 응답 생성
         response_data = {
             'infra': infra,
-            'report_id': report_id,
+            'report_form_id': report_form_id,
             'inspection_list': inspection_list
         }
 

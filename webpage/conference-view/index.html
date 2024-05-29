@@ -3,11 +3,26 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>화상회의 상세정보</title>
+    <title>화상회의 상세정보(제작중)</title>
     <link rel="stylesheet" type="text/css" href="../styles.css" />
     <link rel="stylesheet" type="text/css" href="conference-view.css" />
+    <style>
+      #user-info {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        text-align: right;
+      }
+      #user-info span {
+        display: block;
+      }
+    </style>
   </head>
   <body>
+    <div id="user-info">
+      <span id="user-email"></span>
+      <span id="user-name"></span>
+    </div>
     <div id="container">
       <h2>회의 목록</h2>
       <div id="conference-list">
@@ -15,6 +30,7 @@
       </div>
     </div>
 
+    <script src="../user-info.js"></script>
     <script src="conference-view.js"></script>
   </body>
 </html>

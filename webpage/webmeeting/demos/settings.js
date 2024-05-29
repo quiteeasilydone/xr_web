@@ -52,10 +52,11 @@
 // the whole session.
 //
 var server = null;
-if(window.location.protocol === 'http:')
-	server = "http://" + window.location.hostname + ":8088/janus";
-else
-	server = "ws://" + window.location.hostname + "/janus_ws";
+// if(window.location.protocol === 'https:')
+// 	server = "https://" + window.location.hostname + "/janus";
+// else
+// 	server = "wss://" + window.location.hostname + "/janus-ws";
+server = "wss://rtctest.p-e.kr/janus-ws";
 
 // server = "https://" + window.location.hostname + "/janus/";
 

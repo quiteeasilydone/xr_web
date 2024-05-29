@@ -23,3 +23,8 @@ class InspectedReport(BaseModel):
     report_form_id: str
     infra: str
     inspection_list: List[Inspection_form]
+
+class User(BaseModel):
+    employee_identification_number: int
+    user_name: str
+    email: str

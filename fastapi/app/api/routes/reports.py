@@ -2,7 +2,7 @@ from fastapi import APIRouter
 from fastapi import FastAPI, Request, HTTPException, Depends
 from fastapi.responses import JSONResponse
 from db import postgres_connection
-from schemas import reponse_body
+from schemas import response_body
 
 import json
 
@@ -11,7 +11,7 @@ router = APIRouter()
 
 # 보고서(양식) 정보 입력
 @router.post("/api/reports")
-async def db_submit(request: Request, data: reponse_body.report_form):
+async def db_submit(request: Request, data: response_body.report_form):
 
     # json data parsing
     infra_name = data.infra
