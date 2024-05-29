@@ -171,3 +171,5 @@ async def submit_inspected_report(request: Request, data: request_body.Inspected
     except Exception as e:
         await conn.close()
         raise HTTPException(status_code=500, detail=f"Error submitting report: {str(e)}")
+
+#cc
