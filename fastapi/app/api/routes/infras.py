@@ -6,9 +6,13 @@ from db import postgres_connection
 
 router = APIRouter()
 
+# 앞으로 모든 API에는 사용자 정보가 있어야 합니다.
+
+# body에 사용자 정보(email)를 담아서 주면 참조하여 해당 사용자가 작성한 것들만 return
+
 # infra name에 해당하는 가장 최신의 report 받기
 @router.get("/api/infra/report")
-async def db_view(request: Request, infra: str = None):
+async def get_recent_report_form(request: Request, infra: str = None):
     # 인프라 이름 파라미터 확인
     if not infra:
         raise HTTPException(status_code=400, detail="Infra name is missing in query parameters")

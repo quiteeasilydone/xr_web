@@ -4,6 +4,8 @@ from fastapi.responses import JSONResponse
 from db import minio_connection
 from db import postgres_connection
 from schemas import response_body
+from schemas import request_body
+
 import pytz
 import os
 import json
@@ -129,7 +131,7 @@ async def get_posted_report_from_minio(request: Request, posted_report_id: int =
 
 # 점검 완료 결과를 DB 및 minIO에 저장
 @router.post("/api/report")
-async def submit_inspected_report(request: Request, data: response_body.InspectedReport):
+async def submit_inspected_report(request: Request, data: request_body.InspectedReport):
     try:
         # Extract data from JSON
         start_time = int(data.start_time)

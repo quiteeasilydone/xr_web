@@ -3,6 +3,7 @@ from fastapi import FastAPI, Request, HTTPException, Depends
 from fastapi.responses import JSONResponse
 from db import postgres_connection
 from schemas import response_body
+from schemas import request_body
 
 import json
 
@@ -11,13 +12,13 @@ router = APIRouter()
 
 # 보고서(양식) 정보 입력
 @router.post("/api/reports")
-async def db_submit(request: Request, data: response_body.report_form):
+async def submit_report_form(request: Request, data: request_body.Report_form):
 
     # json data parsing
     infra_name = data.infra
 
-    # 임시 user_name 0000
-    user_name = "0000"
+    # user_name
+    user_name = data.user_name
 
     if not infra_name:
         raise HTTPException(status_code=400, detail="Infra field is required")
@@ -80,10 +81,146 @@ async def db_submit(request: Request, data: response_body.report_form):
         raise HTTPException(status_code=500, detail=f"Error saving data: {str(e)}")
 
 
-
-# 설비에 대한 특정 보고서 양식을 가져오기 (보고서 양식 수정을 고려할 것인지 확인 필요)
+# 설비에 대해 가장 최근에 작성된 보고서 양식을 가져오기
 @router.get("/api/report-form")
-async def get_report_forms(request: Request, infra: str = None, report_form_id: int = None):
+async def get_report_from(request: Request, body: request_body.Submitted_report_form):
+    infra_name = body.infra
+    user_name = body.user_name
+
+    if not infra_name:
+        raise HTTPException(status_code=400, detail="Infra name is missing in request body")
+
+    try:
+        conn = await postgres_connection.connect_db()
+
+        # Check if the infra_name exists
+        infra_id = await conn.fetchval('''
+            SELECT infra_id FROM infras WHERE infra_name = $1
+        ''', infra_name)
+        if not infra_id:
+            raise HTTPException(status_code=404, detail=f"Infra with name '{infra_name}' not found")
+
+        # Build the query to get the most recent report_form_id for the given infra_id
+        query = '''
+            SELECT report_form_id 
+            FROM report_forms 
+            WHERE infra_id = $1
+        '''
+        params = [infra_id]
+
+        if user_name:
+            query += ' AND user_name = $2'
+            params.append(user_name)
+
+        query += ' ORDER BY created_at DESC LIMIT 1'
+
+        report_form_id = await conn.fetchval(query, *params)
+        if not report_form_id:
+            raise HTTPException(status_code=404, detail=f"No report form found for infra '{infra_name}'")
+
+        # Retrieve report form data
+        report_form_data = await conn.fetch('''
+            SELECT 
+                t.topic_form_name, 
+                t.image_required, 
+                array_agg(
+                    json_build_object(
+                        'instruction', i.instruction,
+                        'instruction_type', i.instruction_type,
+                        'options', i.options,
+                        'answer', i.answer
+                    )
+                ) AS instruction_list
+            FROM 
+                topic_forms t
+            JOIN 
+                instruction_forms i ON t.topic_form_id = i.topic_form_id
+            WHERE 
+                t.report_form_id = $1
+            GROUP BY 
+                t.topic_form_name, t.image_required
+        ''', report_form_id)
+        print(report_form_data)
+
+        if not report_form_data:
+            raise HTTPException(status_code=404, detail=f"No report form data found for report form id '{report_form_id}'")
+
+        # Format the response data
+        response_data = {
+            "infra_name": infra_name,
+            "report_form_id": report_form_id,
+            "inspection_list": []
+        }
+        for record in report_form_data:
+            inspection = {
+                "topic": record['topic_form_name'],
+                "instruction_list": [],
+                "image_required": record['image_required']
+            }
+            for instruction in record['instruction_list']:
+                instruction_data = {
+                    "instruction": instruction['instruction'],
+                    "instruction_type": instruction['instruction_type'],
+                    "options": instruction['options'],
+                    "answer": None
+                }
+                inspection["instruction_list"].append(instruction_data)
+            response_data["inspection_list"].append(inspection)
+
+        await conn.close()
+        return JSONResponse(content=response_data, status_code=200)
+    except Exception as e:
+        if conn:
+            await conn.close()
+        raise HTTPException(status_code=500, detail=f"Error retrieving report form: {str(e)}")
+
+@router.post("/api/report-forms")
+async def get_report_forms(request: Request, body: request_body.Submitted_report_form):
+    infra_name = body.infra
+    user_name = body.user_name
+
+    if not infra_name:
+        raise HTTPException(status_code=400, detail="Infra name is missing in request body")
+
+    try:
+        conn = await postgres_connection.connect_db()
+
+        # Check if the infra_name exists
+        infra_id = await conn.fetchval('''
+            SELECT infra_id FROM infras WHERE infra_name = $1
+        ''', infra_name)
+        if not infra_id:
+            raise HTTPException(status_code=404, detail=f"Infra with name '{infra_name}' not found")
+
+        # Build the query to get the report_form_ids for the given infra_id
+        query = '''
+            SELECT report_form_id FROM report_forms WHERE infra_id = $1
+        '''
+        params = [infra_id]
+
+        if user_name:
+            query += ' AND user_name = $2'
+            params.append(user_name)
+
+        report_form_ids = await conn.fetch(query, *params)
+
+        # Format the response data
+        response_data = {
+            "infra_name": infra_name,
+            "report_form_ids": [row['report_form_id'] for row in report_form_ids]
+        }
+
+        await conn.close()
+        return JSONResponse(content=response_data, status_code=200)
+    except Exception as e:
+        if conn:
+            await conn.close()
+        raise HTTPException(status_code=500, detail=f"Error retrieving report form data: {str(e)}")
+
+
+# 설비에 대한 특정 보고서 양식을 가져오기 - 특정 보고서 번호 기입 - 더 이상 안쓸 듯
+@router.get("/api/report-form/deprecated")
+async def get_report_form_deprecated(request: Request, infra: str = None, report_form_id: int = None):
     infra_name = infra
 
     if not infra_name:
@@ -163,9 +300,10 @@ async def get_report_forms(request: Request, infra: str = None, report_form_id: 
         await conn.close()
         raise HTTPException(status_code=500, detail=f"Error retrieving report form data: {str(e)}")
 
+
 # 설비에 대한 모든 보고서 양식을 가져오기
-@router.get("/api/report-forms")
-async def get_report_forms(request: Request, infra: str):
+@router.get("/api/report-forms/deprecated")
+async def get_report_forms_deprecated(request: Request, infra: str):
     infra_name = infra
 
     if not infra_name:
