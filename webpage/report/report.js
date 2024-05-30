@@ -39,10 +39,11 @@ class Instruction {
     }
   }
   createDefaultAnswer() {
-    console.log(this.instruction_type);
+    //console.log(this.instruction_type);
     if (this.instruction_type == "check") return ["true"];
-    else if (this.instruction_type == "numericInput") return ["0"];
+    else if (this.instruction_type == "numeric_input") return ["0"];
     else {
+      console.log(this.instruction_type);
       return [this.options[0]];
     }
   }
@@ -50,7 +51,7 @@ class Instruction {
 
 class JsonData {
   constructor(infra, inspectionList) {
-    this.user_name = "관리자 1";
+    this.user_name = "dummy";
     this.infra = infra;
     this.inspection_list = inspectionList;
   }
@@ -184,8 +185,8 @@ function addInstruction(instructionContainer) {
 
     // 선택한 값이 "multipleChoice" 또는 "multipleSelect"인 경우
     if (
-      selectedValue === "multipleChoice" ||
-      selectedValue === "multipleSelect"
+      selectedValue === "multiple_choice" ||
+      selectedValue === "multiple_select"
     ) {
       console.log("선택지 띄울게요");
       // 숨겨진 div를 보이도록 설정
@@ -200,10 +201,10 @@ function addInstruction(instructionContainer) {
   // instructionType 선택 셀렉트 태그 옵션 설정
   const optionValues = [
     "check",
-    "multipleChoice",
-    "singleChoice",
-    "multipleSelect",
-    "numericInput",
+    "multiple_choice",
+    "single_choice",
+    "multiple_select",
+    "numeric_input",
   ];
   const optionTexts = [
     "Check",
@@ -305,7 +306,7 @@ function saveReportForm() {
 
 // JSON을 생성하고 화면에 표시하는 함수
 function generateJson() {
-  const infraName = document.getElementById("infraInput").value;
+  const infraName = document.getElementById("infraSelect").value;
 
   const topicElements = document.querySelectorAll(".topic"); // topicInput 클래스에 속한 요소들 가져오기
 

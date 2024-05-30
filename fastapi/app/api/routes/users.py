@@ -33,7 +33,7 @@ async def make_dummy_user(request: Request):
         raise HTTPException(status_code=500, detail=f"Error saving data: {str(e)}")
 
 # DB에 있는 모든 유저 정보 돌려주기
-@router.get("/api/users", response_model=List[User])
+@router.post("/api/users", response_model=List[User])
 async def login(request: Request):
     conn = await postgres_connection.connect_db()
 

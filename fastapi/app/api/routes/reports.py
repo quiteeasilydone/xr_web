@@ -80,7 +80,7 @@ async def submit_report_form(request: Request, data: ReportForm):
         raise HTTPException(status_code=500, detail=f"Error saving data: {str(e)}")
 
 # 설비에 대해 가장 최근에 작성된 보고서 양식을 가져오기
-@router.get("/api/report-form")
+@router.post("/api/report-form")
 async def get_report_form(request: Request, body: SubmittedReportForm):
     infra_name = body.infra
     user_name = body.user_name
@@ -264,7 +264,7 @@ async def get_report_form(request: Request, body: SubmittedReportForm):
         raise HTTPException(status_code=500, detail=f"Error retrieving report form: {str(e)}")
 
 # 설비에 대한 모든 보고서 양식을 가져오기
-@router.get("/api/report-forms")
+@router.post("/api/report-forms")
 async def get_report_forms(request: Request, body: SubmittedReportForm):
     infra_name = body.infra
     user_name = body.user_name
@@ -309,7 +309,7 @@ async def get_report_forms(request: Request, body: SubmittedReportForm):
 
 
 # 설비에 대한 특정 보고서 양식을 가져오기 - 특정 보고서 번호 기입 - 더 이상 안쓸 듯
-@router.get("/api/report-form/deprecated")
+@router.post("/api/report-form/deprecated")
 async def get_report_form_deprecated(request: Request, infra: str = None, report_form_id: int = None):
     infra_name = infra
 
@@ -392,7 +392,7 @@ async def get_report_form_deprecated(request: Request, infra: str = None, report
 
 
 # 설비에 대한 모든 보고서 양식을 가져오기
-@router.get("/api/report-forms/deprecated")
+@router.post("/api/report-forms/deprecated")
 async def get_report_forms_deprecated(request: Request, infra: str):
     infra_name = infra
 

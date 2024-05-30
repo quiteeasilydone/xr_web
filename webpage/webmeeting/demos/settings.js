@@ -85,4 +85,4 @@ server = "wss://rtctest.p-e.kr/janus-ws";
 // janus.js will fallback to the Google STUN server by default:
 //
 var iceServers = null;
-iceServers = [{urls: "turn:165.246.44.125:3478", username: "test", credential: "test123"}]
+iceServers = [{urls: "stun:stun.l.google.com:19302"}]
