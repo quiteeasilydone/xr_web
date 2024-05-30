@@ -12,30 +12,31 @@ class SignUpRequest(BaseModel):
 class LoginRequest(BaseModel):
     email: str
 
-class Instruction_form(BaseModel):
+class InstructionForm(BaseModel):
     instruction: str
     instruction_type: str
     options: Optional[List[str]]
     answer: Optional[List[str]]
 
-class Inspection_form(BaseModel):
+class InspectionForm(BaseModel):
     topic: str
-    instruction_list: List[Instruction_form]
+    instruction_list: List[InstructionForm]
     image_required: bool
 
-class Report_form(BaseModel):
+class ReportForm(BaseModel):
     user_name: str
     infra: str
-    inspection_list: List[Inspection_form]
+    inspection_list: List[InspectionForm]
 
 class InspectedReport(BaseModel):
     start_time: str
     end_time: str
     report_form_id: str
+    user_name: str
     infra: str
-    inspection_list: List[Inspection_form]
+    inspection_list: List[InspectionForm]
 
 # 설비에 대한 가장 최근의 보고서 요청 모델 스키마
-class Submitted_report_form(BaseModel):
+class SubmittedReportForm(BaseModel):
     infra: str
     user_name: str

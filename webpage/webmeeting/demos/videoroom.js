@@ -148,6 +148,7 @@ $(document).ready(function() {
 											}
 											// Any new feed to attach to?
 											if(msg["publishers"]) {
+												console.log(JSON.stringify(msg["publishers"]));
 												let list = msg["publishers"];
 												Janus.debug("Got a list of available publishers/feeds:", list);
 												for(let f in list) {

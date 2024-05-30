@@ -2,7 +2,7 @@ from fastapi import APIRouter
 from fastapi import FastAPI, Request, HTTPException, Depends
 from fastapi.responses import JSONResponse
 from db import postgres_connection
-from schemas import response_body
+from schemas.request_body import ReportForm, InstructionForm, InspectionForm, SubmittedReportForm
 from schemas import request_body
 
 import json
@@ -10,9 +10,9 @@ import json
 router = APIRouter()
 
 
-# 보고서(양식) 정보 입력
+# 설비에 대한 보고서(양식) 정보 입력
 @router.post("/api/reports")
-async def submit_report_form(request: Request, data: request_body.Report_form):
+async def submit_report_form(request: Request, data: ReportForm):
 
     # json data parsing
     infra_name = data.infra
@@ -26,7 +26,6 @@ async def submit_report_form(request: Request, data: request_body.Report_form):
     # 데이터베이스에 데이터를 저장
     conn = await postgres_connection.connect_db()
 
-    ## postgres SQL
     try:
         # Check if infra_name already exists in the infras table
         infra_id = await conn.fetchval('''
@@ -49,9 +48,9 @@ async def submit_report_form(request: Request, data: request_body.Report_form):
         ''', infra_id, user_name)
 
         # inspectionList의 각 topic에 대해 처리
-        for inspection in data.inspection_list:  # json data 'inspectionList' field
-            topic_name = inspection['topic']
-            image_required = inspection['image_required']
+        for inspection in data.inspection_list:
+            topic_name = inspection.topic
+            image_required = inspection.image_required
             
             # topic_forms 테이블에 삽입
             topic_id = await conn.fetchval('''
@@ -61,11 +60,11 @@ async def submit_report_form(request: Request, data: request_body.Report_form):
             ''', report_id, topic_name, image_required)
 
             # instructionList의 각 instruction에 대해 처리
-            for instruction in inspection.get('instruction_list', []):
-                instruction_text = instruction['instruction']
-                instruction_type = instruction['instruction_type']
-                options = instruction.get('options', [])  # options를 직접 사용합니다.
-                answer = instruction.get('answer', [])    # answer를 직접 사용합니다.
+            for instruction in inspection.instruction_list:
+                instruction_text = instruction.instruction
+                instruction_type = instruction.instruction_type
+                options = instruction.options  # options를 직접 사용합니다.
+                answer = instruction.answer    # answer를 직접 사용합니다.
                 
                 # instruction_forms 테이블에 삽입
                 await conn.execute('''
@@ -80,10 +79,9 @@ async def submit_report_form(request: Request, data: request_body.Report_form):
         await conn.close()
         raise HTTPException(status_code=500, detail=f"Error saving data: {str(e)}")
 
-
 # 설비에 대해 가장 최근에 작성된 보고서 양식을 가져오기
 @router.get("/api/report-form")
-async def get_report_from(request: Request, body: request_body.Submitted_report_form):
+async def get_report_form(request: Request, body: SubmittedReportForm):
     infra_name = body.infra
     user_name = body.user_name
 
@@ -112,7 +110,7 @@ async def get_report_from(request: Request, body: request_body.Submitted_report_
             query += ' AND user_name = $2'
             params.append(user_name)
 
-        query += ' ORDER BY created_at DESC LIMIT 1'
+        query += ' ORDER BY report_form_id DESC LIMIT 1'
 
         report_form_id = await conn.fetchval(query, *params)
         if not report_form_id:
@@ -140,7 +138,6 @@ async def get_report_from(request: Request, body: request_body.Submitted_report_
             GROUP BY 
                 t.topic_form_name, t.image_required
         ''', report_form_id)
-        print(report_form_data)
 
         if not report_form_data:
             raise HTTPException(status_code=404, detail=f"No report form data found for report form id '{report_form_id}'")
@@ -151,18 +148,110 @@ async def get_report_from(request: Request, body: request_body.Submitted_report_
             "report_form_id": report_form_id,
             "inspection_list": []
         }
+
         for record in report_form_data:
             inspection = {
-                "topic": record['topic_form_name'],
+                "topic": record["topic_form_name"],
                 "instruction_list": [],
-                "image_required": record['image_required']
+                "image_required": record["image_required"]
             }
-            for instruction in record['instruction_list']:
+            for instruction_json in record["instruction_list"]:
+                instruction = json.loads(instruction_json)
                 instruction_data = {
-                    "instruction": instruction['instruction'],
-                    "instruction_type": instruction['instruction_type'],
-                    "options": instruction['options'],
-                    "answer": None
+                    "instruction": instruction["instruction"],
+                    "instruction_type": instruction["instruction_type"],
+                    "options": instruction["options"],
+                    "answer": instruction["answer"]
+                }
+                inspection["instruction_list"].append(instruction_data)
+            response_data["inspection_list"].append(inspection)
+
+        await conn.close()
+        return JSONResponse(content=response_data, status_code=200)
+    except Exception as e:
+        if conn:
+            await conn.close()
+        raise HTTPException(status_code=500, detail=f"Error retrieving report form: {str(e)}")
+    infra_name = body.infra
+    user_name = body.user_name
+
+    if not infra_name:
+        raise HTTPException(status_code=400, detail="Infra name is missing in request body")
+
+    try:
+        conn = await postgres_connection.connect_db()
+
+        # Check if the infra_name exists
+        infra_id = await conn.fetchval('''
+            SELECT infra_id FROM infras WHERE infra_name = $1
+        ''', infra_name)
+        if not infra_id:
+            raise HTTPException(status_code=404, detail=f"Infra with name '{infra_name}' not found")
+
+        # Build the query to get the most recent report_form_id for the given infra_id
+        query = '''
+            SELECT report_form_id 
+            FROM report_forms 
+            WHERE infra_id = $1
+        '''
+        params = [infra_id]
+
+        if user_name:
+            query += ' AND user_name = $2'
+            params.append(user_name)
+
+        query += ' ORDER BY report_form_id DESC LIMIT 1'
+
+        report_form_id = await conn.fetchval(query, *params)
+        if not report_form_id:
+            raise HTTPException(status_code=404, detail=f"No report form found for infra '{infra_name}'")
+
+        # Retrieve report form data
+        report_form_data = await conn.fetch('''
+            SELECT 
+                t.topic_form_name, 
+                t.image_required, 
+                array_agg(
+                    json_build_object(
+                        'instruction', i.instruction,
+                        'instruction_type', i.instruction_type,
+                        'options', i.options,
+                        'answer', i.answer
+                    )
+                ) AS instruction_list
+            FROM 
+                topic_forms t
+            JOIN 
+                instruction_forms i ON t.topic_form_id = i.topic_form_id
+            WHERE 
+                t.report_form_id = $1
+            GROUP BY 
+                t.topic_form_name, t.image_required
+        ''', report_form_id)
+
+        if not report_form_data:
+            raise HTTPException(status_code=404, detail=f"No report form data found for report form id '{report_form_id}'")
+
+        # Format the response data
+        response_data = {
+            "infra_name": infra_name,
+            "report_form_id": report_form_id,
+            "inspection_list": []
+        }
+        print(response_data)
+        print(report_form_data)
+        for record in report_form_data:
+            inspection = {
+                "topic": record["topic_form_name"],
+                "instruction_list": [],
+                "image_required": record["image_required"]
+            }
+            for instruction in record["instruction_list"]:
+                instruction_data = {
+                    "instruction": instruction["instruction"],
+                    "instruction_type": instruction["instruction_type"],
+                    "options": instruction["options"],
+                    "answer": instruction["answer"]
                 }
                 inspection["instruction_list"].append(instruction_data)
             response_data["inspection_list"].append(inspection)
@@ -174,8 +263,9 @@ async def get_report_from(request: Request, body: request_body.Submitted_report_
             await conn.close()
         raise HTTPException(status_code=500, detail=f"Error retrieving report form: {str(e)}")
 
-@router.post("/api/report-forms")
-async def get_report_forms(request: Request, body: request_body.Submitted_report_form):
+# 설비에 대한 모든 보고서 양식을 가져오기
+@router.get("/api/report-forms")
+async def get_report_forms(request: Request, body: SubmittedReportForm):
     infra_name = body.infra
     user_name = body.user_name
 

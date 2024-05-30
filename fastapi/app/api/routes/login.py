@@ -3,7 +3,7 @@ from fastapi.security import OAuth2PasswordBearer
 from fastapi import FastAPI, Request, HTTPException, Depends
 from jose import jwt
 from db import postgres_connection
-from starlette.status import HTTP_202_ACCEPTED
+from starlette.status import HTTP_202_ACCEPTED, HTTP_401_UNAUTHORIZED
 from schemas import request_body
 
 import os

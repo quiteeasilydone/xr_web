@@ -2,7 +2,7 @@ from fastapi import APIRouter
 from fastapi import FastAPI, Request, HTTPException, Depends
 from fastapi.responses import JSONResponse
 from db import postgres_connection
-from schemas import response_body
+from schemas.response_body import User
 from typing import List
 router = APIRouter()
 
@@ -12,16 +12,17 @@ router = APIRouter()
 async def make_dummy_user(request: Request):
 
     # 임시 user_name 0000
-    user_name = "0000"
-    email = "dummy@dummy.com"
+    user_name = "dummy_company"
+    email = "dummy_company@gmail.com"
+    employee_identification_number = 8888
 
     conn = await postgres_connection.connect_db()
 
     try:
         await conn.fetch('''
-            INSERT INTO users ("user_name", "email")
-            VALUES ($1, $2)
-        ''', user_name, email
+            INSERT INTO users ("user_name", "email", "employee_identification_number")
+            VALUES ($1, $2, $3)
+        ''', user_name, email, employee_identification_number
         )
         
         await conn.close()
@@ -32,7 +33,7 @@ async def make_dummy_user(request: Request):
         raise HTTPException(status_code=500, detail=f"Error saving data: {str(e)}")
 
 # DB에 있는 모든 유저 정보 돌려주기
-@router.get("/api/users", response_model=List[response_body.User])
+@router.get("/api/users", response_model=List[User])
 async def login(request: Request):
     conn = await postgres_connection.connect_db()
 

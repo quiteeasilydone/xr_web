@@ -10,7 +10,7 @@ CREATE TABLE users(
     user_id SERIAL PRIMARY KEY,
     email VARCHAR(255) NOT NULL,
     user_name VARCHAR(255) NOT NULL UNIQUE, -- 사용자 닉네임
-    employee_identification_number BIGINT NOT NULL -- 사원번호, 회원가입할 때 직접 입력
+    employee_identification_number BIGINT NOT NULL UNIQUE -- 사원번호, 회원가입할 때 직접 입력
 );
 
 CREATE TABLE report_forms (

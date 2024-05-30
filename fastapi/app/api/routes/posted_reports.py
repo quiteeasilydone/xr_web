@@ -138,6 +138,7 @@ async def submit_inspected_report(request: Request, data: request_body.Inspected
         end_time = int(data.end_time)
         report_form_id = int(data.report_form_id)
         infra_name = data.infra
+        user_name = data.user_name
         inspection_list = data.inspection_list
         
         # Connect to the database
@@ -156,7 +157,7 @@ async def submit_inspected_report(request: Request, data: request_body.Inspected
             INSERT INTO posted_reports (posted_report_path, report_form_id, start_time, end_time, user_name)
             VALUES ($1, $2, $3, $4, $5)
             RETURNING posted_report_id
-        ''', posted_report_path, report_form_id, start_time, end_time, "0000")
+        ''', posted_report_path, report_form_id, start_time, end_time, user_name)
         await conn.close()
 
         # 2

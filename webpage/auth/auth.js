@@ -4,7 +4,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const code = getQueryParam("code");
 
   if (code) {
-    authenticateUser(code);
+    // authenticateUser(code);
+    authenticateUser(code, checkEmail);
   } else {
     console.error("No code parameter found in the URL");
   }
@@ -51,7 +52,7 @@ function redirectToMenu() {
 }
 
 // 사용자 인증 함수
-function authenticateUser(code) {
+function authenticateUser(code, callback) {
   const apiUrl = `/api/auth/google?code=${code}`;
 
   fetch(apiUrl)
@@ -59,10 +60,37 @@ function authenticateUser(code) {
     .then((data) => {
       printResponseData(data); // 응답 데이터를 콘솔에 출력
       emailToCheck = data.email;
+      callback(emailToCheck);
+
       //   setAuthCookies(data); // 응답 데이터로 쿠키 설정
       //   redirectToMenu(); // /menu로 리다이렉트
     })
     .catch((error) => {
       console.error("Error fetching the API:", error);
+    });
+}
+
+function checkEmail(email) {
+  console.log(`Checking email: ${email}`);
+
+  fetch("/api/login", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ email }),
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.exists) {
+        console.log("User exists:", data.user);
+        // 유저가 존재할 경우 처리할 로직
+      } else {
+        console.log("User does not exist");
+        // 유저가 존재하지 않을 경우 처리할 로직
+      }
+    })
+    .catch((error) => {
+      console.error("Error checking email:", error);
     });
 }

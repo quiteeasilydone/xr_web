@@ -50,6 +50,7 @@ class Instruction {
 
 class JsonData {
   constructor(infra, inspectionList) {
+    this.user_name = "관리자 1";
     this.infra = infra;
     this.inspection_list = inspectionList;
   }
