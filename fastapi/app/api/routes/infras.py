@@ -6,7 +6,7 @@ from db import postgres_connection
 
 router = APIRouter()
 
-# 앞으로 모든 API에는 사용자 정보가 있어야 합니당.
+# 앞으로 모든 API에는 사용자 정보가 있어야 합니다.
 
 # body에 사용자 정보(email)를 담아서 주면 참조하여 해당 사용자가 작성한 것들만 return
 
