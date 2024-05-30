@@ -77,7 +77,7 @@ async def get_recent_report_form(request: Request, infra: str = None):
         raise HTTPException(status_code=500, detail=f"Error retrieving data: {str(e)}")
 
 # 전체 설비 목록 가져오기
-# 페이지네이션 필요
+# 페이지네이션 필요a
 @router.get("/api/infra-list", tags=["infras"])
 async def get_infra_list(request: Request):
     try:
