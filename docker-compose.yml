@@ -79,6 +79,7 @@ services:
       container_name: janus
       volumes:
         - ../jsy/certbot:/etc/letsencrypt
+        # - ./janus/log/janus.log:/var/log/janus.log
       ports:
         - 7088:7088
         - 8088:8088

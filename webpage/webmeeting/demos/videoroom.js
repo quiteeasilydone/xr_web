@@ -478,6 +478,7 @@ function publishOwnFeed(useAudio) {
 			},
 			success: function(jsep) {
 				Janus.debug("Got publisher SDP!", jsep);
+				console.log(JSON.stringify(jsep));
 				let publish = { request: "configure", audio: useAudio, video: true };
 				// You can force a specific codec to use when publishing by using the
 				// audiocodec and videocodec properties, for instance:
