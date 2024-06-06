@@ -12,8 +12,8 @@ router = APIRouter()
 async def make_dummy_user(request: Request):
 
     # 임시 user_name 0000
-    user_name = "dummy_company"
-    email = "dummy_company@gmail.com"
+    user_name = "dummy"
+    email = "dummy_company12@gmail.com"
     employee_identification_number = 8888
 
     conn = await postgres_connection.connect_db()
