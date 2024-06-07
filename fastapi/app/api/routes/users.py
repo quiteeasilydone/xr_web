@@ -111,7 +111,7 @@ async def registration_wearable(request: Request):
     return 0
 
 
-# 회사가 가지고 있는 모든 안드로이드 기기 list return
+# 회사가 가지고 있는 모든 안드로이드 기기의 list return
 @router.post("/api/send-wearable-identification")
 async def registration_wearable(request: Request):
     # wearable_identification_number INT[] 의 모든 요소를 return
