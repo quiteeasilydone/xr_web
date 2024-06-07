@@ -61,6 +61,7 @@ $(document).ready(function() {
 								success: function(pluginHandle) {
 									$('#details').remove();
 									sfutest = pluginHandle;
+									createRoom(myroom);
 									Janus.log("Plugin attached! (" + sfutest.getPlugin() + ", id=" + sfutest.getId() + ")");
 									Janus.log("  -- This is a publisher/manager");
 									// Prepare the username registration
@@ -176,6 +177,7 @@ $(document).ready(function() {
 											});
 										} else if(event === "event") {
 											// Any info on our streams or a new feed to attach to?
+											console.log(event);
 											if(msg["streams"]) {
 												let streams = msg["streams"];
 												for(let i in streams) {
@@ -944,4 +946,37 @@ function updateSimulcastSvcButtons(feed, substream, temporal) {
 		$('#tl' + index + '-1').removeClass('btn-primary btn-success').addClass('btn-primary');
 		$('#tl' + index + '-0').removeClass('btn-primary btn-success').addClass('btn-primary');
 	}
+}
+
+function createRoom(roomId) {
+    let create = {
+        request: "create",
+        room: roomId,
+        description: "My specific room",
+        is_private: false,
+        publishers: 6,
+        bitrate: 128000,
+        audiocodec: "opus",
+        videocodec: "vp8"
+    };
+    sfutest.send({
+        message: create,
+        success: function(result) {
+            console.log("Room created successfully", result);
+            joinRoom(roomId);
+        },
+        error: function(error) {
+            console.error("Error creating room", error);
+        }
+    });
+}
+
+function joinRoom(roomId) {
+    let register = {
+        request: "join",
+        room: roomId,
+        ptype: "publisher",
+        display: "User"
+    };
+    sfutest.send({ message: register });
 }

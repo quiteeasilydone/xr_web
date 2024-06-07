@@ -77,13 +77,13 @@ async def get_recent_report_form(request: Request, infra: str = None):
         raise HTTPException(status_code=500, detail=f"Error retrieving data: {str(e)}")
 
 # 전체 설비 목록 가져오기
-# 페이지네이션 필요a
+# 페이지네이션 필요
 @router.get("/api/infra-list", tags=["infras"])
 async def get_infra_list(request: Request):
     try:
         # DB 연결
         conn = await postgres_connection.connect_db()
-
+        a = 1
 
         # 모든 보고서의 인프라 이름 가져오기
         infra_list = await conn.fetch('SELECT DISTINCT infra_name FROM infras')

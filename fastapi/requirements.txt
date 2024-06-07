@@ -9,3 +9,4 @@ python-jose[cryptography]
 pydantic
 starlette
 jose
+qrcode[pil]

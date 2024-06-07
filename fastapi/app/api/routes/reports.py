@@ -17,8 +17,8 @@ async def submit_report_form(request: Request, data: ReportForm):
     # json data parsing
     infra_name = data.infra
 
-    # user_name
-    user_name = data.user_name
+    # company_name
+    company_name = data.company_name
 
     if not infra_name:
         raise HTTPException(status_code=400, detail="Infra field is required")
@@ -42,10 +42,10 @@ async def submit_report_form(request: Request, data: ReportForm):
 
         # Insert into report_forms
         report_id = await conn.fetchval('''
-            INSERT INTO report_forms ("infra_id", "user_name")
+            INSERT INTO report_forms ("infra_id", "company_name")
             VALUES ($1, $2)
             RETURNING report_form_id
-        ''', infra_id, user_name)
+        ''', infra_id, company_name)
 
         # inspectionList의 각 topic에 대해 처리
         for inspection in data.inspection_list:
@@ -83,7 +83,7 @@ async def submit_report_form(request: Request, data: ReportForm):
 @router.post("/api/report-form")
 async def get_report_form(request: Request, body: SubmittedReportForm):
     infra_name = body.infra
-    user_name = body.user_name
+    company_name = body.company_name
 
     if not infra_name:
         raise HTTPException(status_code=400, detail="Infra name is missing in request body")
@@ -106,9 +106,9 @@ async def get_report_form(request: Request, body: SubmittedReportForm):
         '''
         params = [infra_id]
 
-        if user_name:
-            query += ' AND user_name = $2'
-            params.append(user_name)
+        if company_name:
+            query += ' AND company_name = $2'
+            params.append(company_name)
 
         query += ' ORDER BY report_form_id DESC LIMIT 1'
 
@@ -173,7 +173,7 @@ async def get_report_form(request: Request, body: SubmittedReportForm):
             await conn.close()
         raise HTTPException(status_code=500, detail=f"Error retrieving report form: {str(e)}")
     infra_name = body.infra
-    user_name = body.user_name
+    company_name = body.company_name
 
     if not infra_name:
         raise HTTPException(status_code=400, detail="Infra name is missing in request body")
@@ -196,9 +196,9 @@ async def get_report_form(request: Request, body: SubmittedReportForm):
         '''
         params = [infra_id]
 
-        if user_name:
-            query += ' AND user_name = $2'
-            params.append(user_name)
+        if company_name:
+            query += ' AND company_name = $2'
+            params.append(company_name)
 
         query += ' ORDER BY report_form_id DESC LIMIT 1'
 
@@ -267,7 +267,7 @@ async def get_report_form(request: Request, body: SubmittedReportForm):
 @router.post("/api/report-forms")
 async def get_report_forms(request: Request, body: SubmittedReportForm):
     infra_name = body.infra
-    user_name = body.user_name
+    company_name = body.company_name
 
     if not infra_name:
         raise HTTPException(status_code=400, detail="Infra name is missing in request body")
@@ -288,9 +288,9 @@ async def get_report_forms(request: Request, body: SubmittedReportForm):
         '''
         params = [infra_id]
 
-        if user_name:
-            query += ' AND user_name = $2'
-            params.append(user_name)
+        if company_name:
+            query += ' AND company_name = $2'
+            params.append(company_name)
 
         report_form_ids = await conn.fetch(query, *params)
 

@@ -48,7 +48,7 @@ async def get_posted_reports(request: Request, infra: str = None):
             'posted_report_path': report['posted_report_path'],
             'start_time': report['start_time'],
             'end_time': report['end_time'],
-            'user_name': report['user_name']
+            'company_name': report['company_name']
         } for report in reports]
 
         return JSONResponse(content={"posted_reports": reports_list}, status_code=200)
@@ -138,7 +138,7 @@ async def submit_inspected_report(request: Request, data: request_body.Inspected
         end_time = int(data.end_time)
         report_form_id = int(data.report_form_id)
         infra_name = data.infra
-        user_name = data.user_name
+        company_name = data.company_name
         inspection_list = data.inspection_list
         
         # Connect to the database
@@ -154,10 +154,10 @@ async def submit_inspected_report(request: Request, data: request_body.Inspected
 
         # Insert data into posted_reports table
         posted_report_id = await conn.fetchval('''
-            INSERT INTO posted_reports (posted_report_path, report_form_id, start_time, end_time, user_name)
+            INSERT INTO posted_reports (posted_report_path, report_form_id, start_time, end_time, company_name)
             VALUES ($1, $2, $3, $4, $5)
             RETURNING posted_report_id
-        ''', posted_report_path, report_form_id, start_time, end_time, user_name)
+        ''', posted_report_path, report_form_id, start_time, end_time, company_name)
         await conn.close()
 
         # 2

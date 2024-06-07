@@ -54,7 +54,7 @@ async def get_token(token: str = Depends(oauth2_scheme)):
 @router.post("/api/sign-up")
 async def sign_up(request: request_body.SignUpRequest):
     conn = await postgres_connection.connect_db()
-    # body에 email, user_name, employee_identification_number 담아옴
+    # body에 email, company_name, employee_identification_number 담아옴
     # 이걸 DB user table에 저장
     # 이미 row 있으면 저장 안하고 http status code 202 돌려주면서 에러 메세지도 돌려줌
     # 202 - Accepted - 허용됨 - 요청은 접수하였지만, 처리가 완료되지 않았다. 응답 헤더의 Location, Retry-After를 참고하여 클라이언트는 다시 요청을 보냅니다.
@@ -73,8 +73,8 @@ async def sign_up(request: request_body.SignUpRequest):
 
         # 새로운 사용자 삽입
         await conn.execute(
-            "INSERT INTO users (email, user_name, employee_identification_number) VALUES ($1, $2, $3)",
-            request.email, request.user_name, request.employee_identification_number
+            "INSERT INTO users (email, company_name, employee_identification_number) VALUES ($1, $2, $3)",
+            request.email, request.company_name, request.employee_identification_number
         )
         await conn.close()
 
@@ -95,14 +95,14 @@ async def login(request: request_body.LoginRequest):
     try:
         # 사용자 정보 조회
         user = await conn.fetchrow(
-            "SELECT user_name, employee_identification_number FROM users WHERE email = $1",
+            "SELECT company_name, employee_identification_number FROM users WHERE email = $1",
             request.email
         )
         await conn.close()
 
         if user:
             return {
-                "user_name": user['user_name'],
+                "company_name": user['company_name'],
                 "employee_identification_number": user['employee_identification_number']
             }
         else:

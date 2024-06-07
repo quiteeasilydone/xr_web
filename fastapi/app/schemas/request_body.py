@@ -5,7 +5,7 @@ from typing import List, Optional
 # 회원가입 요청 바디 모델
 class SignUpRequest(BaseModel):
     email: str
-    user_name: str
+    company_name: str
     employee_identification_number: int
 
 # 로그인 요청 데이터 모델 정의
@@ -24,7 +24,7 @@ class InspectionForm(BaseModel):
     image_required: bool
 
 class ReportForm(BaseModel):
-    user_name: str
+    company_name: str
     infra: str
     inspection_list: List[InspectionForm]
 
@@ -32,11 +32,16 @@ class InspectedReport(BaseModel):
     start_time: str
     end_time: str
     report_form_id: str
-    user_name: str
+    company_name: str
     infra: str
     inspection_list: List[InspectionForm]
 
 # 설비에 대한 가장 최근의 보고서 요청 모델 스키마
 class SubmittedReportForm(BaseModel):
     infra: str
-    user_name: str
+    company_name: str
+
+class User(BaseModel):
+    employee_identification_number: int
+    company_name: str
+    email: str

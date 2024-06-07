@@ -1,5 +1,7 @@
 CREATE TYPE instruction_type AS ENUM ('check', 'multiple_choice', 'single_choice', 'multiple_select', 'numeric_input');
 
+
+
 CREATE TABLE infras(
     infra_id SERIAL PRIMARY KEY,
     infra_name VARCHAR(255) NOT NULL
@@ -9,16 +11,17 @@ CREATE TABLE infras(
 CREATE TABLE users(
     user_id SERIAL PRIMARY KEY,
     email VARCHAR(255) NOT NULL,
-    user_name VARCHAR(255) NOT NULL UNIQUE, -- 사용자 닉네임
+    company_name VARCHAR(255) NOT NULL UNIQUE, -- 사용자 닉네임 -- 추후에 company_name으로 수정
+    wearable_identification_number INT[] NOT NULL, -- 1:n
     employee_identification_number BIGINT NOT NULL UNIQUE -- 사원번호, 회원가입할 때 직접 입력
 );
 
 CREATE TABLE report_forms (
     report_form_id SERIAL PRIMARY KEY,
     infra_id INT NOT NULL,
-    user_name VARCHAR(255) NOT NULL, -- 작성자의 이름 또는 아이디(아이디를 만드는 것이 좋을것 같음)
+    company_name VARCHAR(255) NOT NULL, -- 작성자의 이름 또는 아이디(아이디를 만드는 것이 좋을것 같음)
     FOREIGN KEY (infra_id) REFERENCES infras(infra_id) ON DELETE CASCADE,
-    FOREIGN KEY (user_name) REFERENCES users(user_name) ON DELETE CASCADE
+    FOREIGN KEY (company_name) REFERENCES users(company_name) ON DELETE CASCADE
 );
 
 CREATE TABLE topic_forms (
@@ -47,9 +50,9 @@ CREATE TABLE posted_reports(
     report_form_id INT NOT NULL,
     start_time BIGINT, -- 유닉스 타임스탬프로 작성 시작 시간 
     end_time BIGINT, -- 유닉스 타임스탬프로 작성 완료 시간
-    user_name VARCHAR(255) NOT NULL, -- 작성자의 이름 또는 아이디(아이디를 만드는 것이 좋을것 같음)
+    company_name VARCHAR(255) NOT NULL, -- 작성자의 이름 또는 아이디(아이디를 만드는 것이 좋을것 같음)
     FOREIGN KEY (report_form_id) REFERENCES report_forms(report_form_id) ON DELETE CASCADE,
-    FOREIGN KEY (user_name) REFERENCES users(user_name) ON DELETE CASCADE
+    FOREIGN KEY (company_name) REFERENCES users(company_name) ON DELETE CASCADE
 );
 
 
