@@ -749,6 +749,7 @@ function Janus(gatewayCallbacks) {
 			// Success!
 			Janus.debug("Got a success on session " + sessionId);
 			Janus.debug(json);
+			console.log(JSON.stringify(json));
 			const transaction = json["transaction"];
 			if(transaction) {
 				const reportSuccess = transactions.get(transaction);

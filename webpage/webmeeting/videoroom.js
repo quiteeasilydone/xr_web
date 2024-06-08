@@ -9,7 +9,7 @@ var janus = null;
 var sfutest = null;
 var opaqueId = "videoroomtest-"+Janus.randomString(12);
 
-var myroom = 1234;	// Demo room
+var myroom = "123456";	// Demo room
 if(getQueryStringValue("room") !== "")
 	myroom = parseInt(getQueryStringValue("room"));
 var myusername = null;
@@ -64,6 +64,7 @@ $(document).ready(function() {
 									createRoom(myroom);
 									Janus.log("Plugin attached! (" + sfutest.getPlugin() + ", id=" + sfutest.getId() + ")");
 									Janus.log("  -- This is a publisher/manager");
+									console.log(JSON.stringify(sfutest));
 									// Prepare the username registration
 									$('#videojoin').removeClass('hide').removeClass('hide');
 									$('#registernow').removeClass('hide').removeClass('hide');
