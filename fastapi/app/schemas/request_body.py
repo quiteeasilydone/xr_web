@@ -26,6 +26,7 @@ class InspectionForm(BaseModel):
 class ReportForm(BaseModel):
     company_name: str
     infra: str
+    last_modified_time: str
     inspection_list: List[InspectionForm]
 
 class InspectedReport(BaseModel):
@@ -45,3 +46,12 @@ class User(BaseModel):
     employee_identification_number: int
     company_name: str
     email: str
+
+# 안드로이드 기기 식별자 정보 모델 wearable-identification
+class WearableIdentifier(BaseModel):
+    company_name: str
+    wearable_identification_number: int
+
+# 회사 이름 request 모델 
+class Company(BaseModel):
+    company_name: str

@@ -1,9 +1,9 @@
 let janus = null;
 let sfutest = null;
-let myRoom = 12345; // 생성할 방 번호
 let opaqueId = "videoroomtest-" + Janus.randomString(12);
+let myRoom = 12345; // 생성할 방 번호
+let dataChannel = null;
 
-// Janus 초기화
 Janus.init({
     debug: "all",
     callback: function() {
@@ -15,6 +15,7 @@ Janus.init({
                     opaqueId: opaqueId,
                     success: function(pluginHandle) {
                         sfutest = pluginHandle;
+                        console.log("Plugin attached! (" + sfutest.getPlugin() + ", id=" + sfutest.getId() + ")");
                         createRoom(myRoom);
                     },
                     error: function(error) {
@@ -38,12 +39,23 @@ Janus.init({
                             myid = msg["id"];
                             mypvtid = msg["private_id"];
                             Janus.log("Successfully joined room " + msg["room"] + " with ID " + myid);
+                            if (jsep) {
+                                sfutest.createAnswer({
+                                    jsep: jsep,
+                                    media: { audioSend: false, videoSend: false, data: true }, // Enable DataChannel
+                                    success: function(jsep) {
+                                        Janus.debug("Got SDP!", jsep);
+                                        const body = { request: "start", room: myRoom };
+                                        sfutest.send({ message: body, jsep: jsep });
+                                    },
+                                    error: function(error) {
+                                        Janus.error("WebRTC error:", error);
+                                        alert("WebRTC error " + error.message);
+                                    }
+                                });
+                            }
                         } else if (event === "event") {
                             // Handle other events
-                        }
-                        if (jsep !== undefined && jsep !== null) {
-                            Janus.debug("Handling SDP as well...", jsep);
-                            sfutest.handleRemoteJsep({ jsep: jsep });
                         }
                     },
                     onlocalstream: function(stream) {
@@ -51,6 +63,15 @@ Janus.init({
                     },
                     onremotestream: function(stream) {
                         Janus.attachMediaStream($('#remotevideo').get(0), stream);
+                    },
+                    ondataopen: function(label, protocol) {
+                        Janus.log("DataChannel opened!");
+                        dataChannel = sfutest.dataChannel;
+                        document.getElementById('sendImage').onclick = sendImage;
+                    },
+                    ondata: function(data, label) {
+                        Janus.log("We got data from the DataChannel!", data);
+                        receiveImage(data);
                     },
                     oncleanup: function() {
                         Janus.log(" ::: Got a cleanup notification :::");
@@ -99,4 +120,35 @@ function joinRoom(roomId) {
         display: "User"
     };
     sfutest.send({ message: register });
+}
+
+function sendImage() {
+    console.log("sendImage function called");
+    if (!dataChannel || dataChannel.readyState !== "open") {
+        console.error("DataChannel is not open");
+        return;
+    }
+    const fileInput = document.getElementById('imageInput');
+    const file = fileInput.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const arrayBuffer = event.target.result;
+            console.log("Sending image data...");
+            dataChannel.send(arrayBuffer);
+        };
+        reader.readAsArrayBuffer(file);
+    } else {
+        alert("Please select an image file first.");
+    }
+}
+
+function receiveImage(data) {
+    console.log("Receiving image data...");
+    const arrayBuffer = data;
+    const blob = new Blob([arrayBuffer], { type: 'image/jpeg' });
+    const url = URL.createObjectURL(blob);
+    const img = document.getElementById('receivedImage');
+    img.src = url;
+    img.style.display = 'block';
 }

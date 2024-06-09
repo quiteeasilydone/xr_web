@@ -5,72 +5,142 @@ from db import postgres_connection
 from schemas.request_body import ReportForm, InstructionForm, InspectionForm, SubmittedReportForm
 from schemas import request_body
 
+from datetime import datetime
 import json
 
 router = APIRouter()
 
-
-# 설비에 대한 보고서(양식) 정보 입력
+# 설비에 대한 보고서(양식) 정보 입력 또는 수정
 @router.post("/api/reports")
 async def submit_report_form(request: Request, data: ReportForm):
-
     # json data parsing
     infra_name = data.infra
+    last_modified_time_str = data.last_modified_time
 
     # company_name
     company_name = data.company_name
 
+    # Check if infra_name is provided
     if not infra_name:
         raise HTTPException(status_code=400, detail="Infra field is required")
 
-    # 데이터베이스에 데이터를 저장
+    # 데이터베이스에 데이터를 저장 또는 수정
     conn = await postgres_connection.connect_db()
 
     try:
+        # Convert last_modified_time from string to datetime
+        last_modified_time = datetime.strptime(last_modified_time_str, "%Y-%m-%dT%H:%M:%S")
+
         # Check if infra_name already exists in the infras table
         infra_id = await conn.fetchval('''
             SELECT infra_id FROM infras WHERE infra_name = $1
         ''', infra_name)
 
-        # If infra_name does not exist, insert into infras table
+        # If infra_name does not exist, raise an error
         if not infra_id:
-            infra_id = await conn.fetchval('''
-                INSERT INTO infras ("infra_name")
-                VALUES ($1)
-                RETURNING infra_id
-            ''', infra_name)
+            raise HTTPException(status_code=404, detail="Infra not found")
 
-        # Insert into report_forms
-        report_id = await conn.fetchval('''
-            INSERT INTO report_forms ("infra_id", "company_name")
-            VALUES ($1, $2)
-            RETURNING report_form_id
+        # Check if there is already a report form for the given infra_id and company_name
+        existing_report_id = await conn.fetchval('''
+            SELECT report_form_id FROM report_forms
+            WHERE infra_id = $1 AND company_name = $2
         ''', infra_id, company_name)
 
-        # inspectionList의 각 topic에 대해 처리
-        for inspection in data.inspection_list:
-            topic_name = inspection.topic
-            image_required = inspection.image_required
-            
-            # topic_forms 테이블에 삽입
-            topic_id = await conn.fetchval('''
-                INSERT INTO topic_forms ("report_form_id", "topic_form_name", "image_required")
-                VALUES ($1, $2, $3)
-                RETURNING topic_form_id
-            ''', report_id, topic_name, image_required)
+        # Convert last_modified_time from string to datetime
+        last_modified_time = datetime.strptime(last_modified_time_str, "%Y-%m-%dT%H:%M:%S")
 
-            # instructionList의 각 instruction에 대해 처리
-            for instruction in inspection.instruction_list:
-                instruction_text = instruction.instruction
-                instruction_type = instruction.instruction_type
-                options = instruction.options  # options를 직접 사용합니다.
-                answer = instruction.answer    # answer를 직접 사용합니다.
-                
-                # instruction_forms 테이블에 삽입
-                await conn.execute('''
-                    INSERT INTO instruction_forms ("topic_form_id", "instruction", "instruction_type", "options", "answer")
-                    VALUES ($1, $2, $3, $4, $5)
-                ''', topic_id, instruction_text, instruction_type, options, answer)
+        # If a report form already exists, update it and related tables
+        if existing_report_id:
+            # Update last_modified_time in report_forms table
+            await conn.execute('''
+                UPDATE report_forms
+                SET last_modified_time = $1
+                WHERE report_form_id = $2
+            ''', last_modified_time, existing_report_id)
+
+            # Update topic_forms and instruction_forms tables
+            for inspection in data.inspection_list:
+                topic_name = inspection.topic
+                image_required = inspection.image_required
+
+                # Check if the topic already exists
+                existing_topic_id = await conn.fetchval('''
+                    SELECT topic_form_id FROM topic_forms
+                    WHERE report_form_id = $1 AND topic_form_name = $2
+                ''', existing_report_id, topic_name)
+
+                # If the topic exists, update it
+                if existing_topic_id:
+                    await conn.execute('''
+                        UPDATE topic_forms
+                        SET image_required = $1
+                        WHERE topic_form_id = $2
+                    ''', image_required, existing_topic_id)
+                else:
+                    # If the topic does not exist, insert it
+                    topic_id = await conn.fetchval('''
+                        INSERT INTO topic_forms ("report_form_id", "topic_form_name", "image_required")
+                        VALUES ($1, $2, $3)
+                        RETURNING topic_form_id
+                    ''', existing_report_id, topic_name, image_required)
+
+                # Update or insert instructions
+                for instruction in inspection.instruction_list:
+                    instruction_text = instruction.instruction
+                    instruction_type = instruction.instruction_type
+                    options = instruction.options
+                    answer = instruction.answer
+
+                    # Check if the instruction already exists
+                    existing_instruction_id = await conn.fetchval('''
+                        SELECT instruction_form_id FROM instruction_forms
+                        WHERE topic_form_id = $1 AND instruction = $2
+                    ''', topic_id, instruction_text)
+
+                    # If the instruction exists, update it
+                    if existing_instruction_id:
+                        await conn.execute('''
+                            UPDATE instruction_forms
+                            SET instruction_type = $1, options = $2, answer = $3
+                            WHERE instruction_form_id = $4
+                        ''', instruction_type, options, answer, existing_instruction_id)
+                    else:
+                        # If the instruction does not exist, insert it
+                        await conn.execute('''
+                            INSERT INTO instruction_forms ("topic_form_id", "instruction", "instruction_type", "options", "answer")
+                            VALUES ($1, $2, $3, $4, $5)
+                        ''', topic_id, instruction_text, instruction_type, options, answer)
+        else:
+            # If a report form does not exist, insert new data
+            report_id = await conn.fetchval('''
+                INSERT INTO report_forms ("infra_id", "company_name", "last_modified_time")
+                VALUES ($1, $2, $3)
+                RETURNING report_form_id
+            ''', infra_id, company_name, last_modified_time)
+
+            # Insert into topic_forms and instruction_forms tables
+            for inspection in data.inspection_list:
+                topic_name = inspection.topic
+                image_required = inspection.image_required
+
+                # Insert into topic_forms
+                topic_id = await conn.fetchval('''
+                    INSERT INTO topic_forms ("report_form_id", "topic_form_name", "image_required")
+                    VALUES ($1, $2, $3)
+                    RETURNING topic_form_id
+                ''', report_id, topic_name, image_required)
+
+                for instruction in inspection.instruction_list:
+                    instruction_text = instruction.instruction
+                    instruction_type = instruction.instruction_type
+                    options = instruction.options
+                    answer = instruction.answer
+
+                    # Insert into instruction_forms
+                    await conn.execute('''
+                        INSERT INTO instruction_forms ("topic_form_id", "instruction", "instruction_type", "options", "answer")
+                        VALUES ($1, $2, $3, $4, $5)
+                    ''', topic_id, instruction_text, instruction_type, options, answer)
 
         await conn.close()
         return JSONResponse(content={"message": "Data saved successfully"}, status_code=200)
@@ -78,6 +148,78 @@ async def submit_report_form(request: Request, data: ReportForm):
         # 예외 발생시 데이터베이스 연결 종료 후 예외 발생
         await conn.close()
         raise HTTPException(status_code=500, detail=f"Error saving data: {str(e)}")
+
+# # 설비에 대한 보고서(양식) 정보 입력
+# @router.post("/api/reports")
+# async def submit_report_form(request: Request, data: ReportForm):
+#     # json data parsing
+#     infra_name = data.infra
+#     last_modified_time_str = data.last_modified_time
+
+#     # company_name
+#     company_name = data.company_name
+
+#     if not infra_name:
+#         raise HTTPException(status_code=400, detail="Infra field is required")
+
+#     # 데이터베이스에 데이터를 저장
+#     conn = await postgres_connection.connect_db()
+
+#     try:
+#         # Convert last_modified_time from string to datetime
+#         last_modified_time = datetime.strptime(last_modified_time_str, "%Y-%m-%dT%H:%M:%S")
+
+#         # Check if infra_name already exists in the infras table
+#         infra_id = await conn.fetchval('''
+#             SELECT infra_id FROM infras WHERE infra_name = $1
+#         ''', infra_name)
+
+#         # If infra_name does not exist, insert into infras table
+#         if not infra_id:
+#             infra_id = await conn.fetchval('''
+#                 INSERT INTO infras ("infra_name")
+#                 VALUES ($1)
+#                 RETURNING infra_id
+#             ''', infra_name)
+
+#         # Insert into report_forms with last_modified_time
+#         report_id = await conn.fetchval('''
+#             INSERT INTO report_forms ("infra_id", "company_name", "last_modified_time")
+#             VALUES ($1, $2, $3)
+#             RETURNING report_form_id
+#         ''', infra_id, company_name, last_modified_time)
+
+#         # inspectionList의 각 topic에 대해 처리
+#         for inspection in data.inspection_list:
+#             topic_name = inspection.topic
+#             image_required = inspection.image_required
+            
+#             # topic_forms 테이블에 삽입
+#             topic_id = await conn.fetchval('''
+#                 INSERT INTO topic_forms ("report_form_id", "topic_form_name", "image_required")
+#                 VALUES ($1, $2, $3)
+#                 RETURNING topic_form_id
+#             ''', report_id, topic_name, image_required)
+
+#             # instructionList의 각 instruction에 대해 처리
+#             for instruction in inspection.instruction_list:
+#                 instruction_text = instruction.instruction
+#                 instruction_type = instruction.instruction_type
+#                 options = instruction.options  # options를 직접 사용합니다.
+#                 answer = instruction.answer    # answer를 직접 사용합니다.
+                
+#                 # instruction_forms 테이블에 삽입
+#                 await conn.execute('''
+#                     INSERT INTO instruction_forms ("topic_form_id", "instruction", "instruction_type", "options", "answer")
+#                     VALUES ($1, $2, $3, $4, $5)
+#                 ''', topic_id, instruction_text, instruction_type, options, answer)
+
+#         await conn.close()
+#         return JSONResponse(content={"message": "Data saved successfully"}, status_code=200)
+#     except Exception as e:
+#         # 예외 발생시 데이터베이스 연결 종료 후 예외 발생
+#         await conn.close()
+#         raise HTTPException(status_code=500, detail=f"Error saving data: {str(e)}")
 
 # 설비에 대해 가장 최근에 작성된 보고서 양식을 가져오기
 @router.post("/api/report-form")

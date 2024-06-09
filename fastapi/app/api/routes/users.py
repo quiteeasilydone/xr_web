@@ -2,11 +2,16 @@ from fastapi import APIRouter
 from fastapi import FastAPI, Request, HTTPException, Depends
 from fastapi.responses import JSONResponse
 from fastapi.responses import StreamingResponse
-from db import postgres_connection
+from fastapi.responses import HTMLResponse
+
 from schemas.response_body import User as response_user
 from schemas.request_body import User as request_user
+from schemas.request_body import WearableIdentifier
+from schemas.request_body import Company
+
 from typing import List
-from fastapi.responses import HTMLResponse
+from db import postgres_connection
+
 import qrcode # QR 코드를 생성하기 위한 라이브러리
 import io # QR 코드를 메모리에 저장하기 위한 라이브러리
 import base64 # QR 코드를 인코딩하기 위한 라이브러리
@@ -93,27 +98,73 @@ async def registration_wearable(request: Request, body: request_user):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generating QR code: {str(e)}")
 
+
 # 안드로이드 기기에서 식별자 데이터 서버로 전송( {회사 이름, 식별자 데이터} ) - DB에 저장
 @router.post("/api/send-wearable-identification")
-async def registration_wearable(request: Request):
+async def registration_wearable(request: Request, body: WearableIdentifier):
+    conn = await postgres_connection.connect_db()
 
-    # 이 함수에서 {회사 이름, 식별자 데이터} 이 쌍이 이미 있으면
-    # "DUP" 의미하는 거 return
 
-    # 없으면
-    # 등록하고 등록했다고 하는 정보랑 Return
-    # "Successfully registered."
+    try:
+        # 회사 이름을 통해 사용자 검색
+        query = """
+        SELECT wearable_identification_number FROM users 
+        WHERE company_name = $1
+        """
+        result = await conn.fetchrow(query, body.company_name)
+        
+        if result is None:
+            return {"message": "User not found."}
 
-    # 에러나면
-    # 에러났다고 return
-    # "Error occur." - 에러 원인도 제공
+        wearable_ids = result['wearable_identification_number']
+        
+        if wearable_ids is None:
+            wearable_ids = []
 
-    return 0
+        if body.wearable_identification_number in wearable_ids:
+            return {"message": "Data pair already exists"}
+        
+        # wearable_identification_number 배열에 새로운 요소 추가
+        update_query = """
+        UPDATE users
+        SET wearable_identification_number = array_append(wearable_identification_number, $1)
+        WHERE company_name = $2
+        RETURNING company_name
+        """
+        company_name = await conn.fetchval(update_query, body.wearable_identification_number, body.company_name)
+        
+        return {"message": "Successfully registered.", "company_name": company_name}
+    
+    except Exception as e:
+        await conn.close()
+
+        # 오류 발생 시 오류 메시지 반환
+        raise HTTPException(status_code=500, detail=f"Error occur: {str(e)}")
 
 
 # 회사가 가지고 있는 모든 안드로이드 기기의 list return
-@router.post("/api/send-wearable-identification")
-async def registration_wearable(request: Request):
+@router.get("/api/wearable-machine-lists")
+async def registration_wearable(request: Request, body: Company):
     # wearable_identification_number INT[] 의 모든 요소를 return
+    conn = await postgres_connection.connect_db()
 
-    return 0
+    try:
+        # 회사 이름을 통해 wearable_identification_number 배열 검색
+        query = """
+        SELECT wearable_identification_number FROM users 
+        WHERE company_name = $1
+        """
+        result = await conn.fetchrow(query, body.company_name)
+        
+        if result is None:
+            raise HTTPException(status_code=404, detail="Company not found")
+
+        wearable_ids = result['wearable_identification_number']
+        
+        return {"wearable_identification_numbers": wearable_ids}
+    
+    except Exception as e:
+        await conn.close()
+
+        # 오류 발생 시 오류 메시지 반환
+        raise HTTPException(status_code=500, detail=f"Error occur: {str(e)}")
