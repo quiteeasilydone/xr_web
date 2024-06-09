@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.openapi.models import Info
 
-from api.routes import login, infras, posted_reports, reports, users
+from api.routes import login, infras, posted_reports, reports, users, whiteboard
 from uvicorn import run
 
 app = FastAPI(openapi_url="/api/docs/openapi.json")
@@ -21,6 +21,7 @@ app.include_router(infras.router, tags=["infras"])
 app.include_router(posted_reports.router, tags=["posted_reports"])
 app.include_router(reports.router, tags=["reports"])
 app.include_router(users.router, tags=["users"])
+app.include_router(whiteboard.router, tags=["whiteboard"])
 
 if __name__ == "__main__":
     run(app, host='0.0.0.0', port=80)

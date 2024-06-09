@@ -70,6 +70,9 @@ $(document).ready(function() {
 									$('#videojoin').removeClass('hide').removeClass('hide');
 									$('#registernow').removeClass('hide').removeClass('hide');
 									$('#canvas').removeClass('hide');
+									$('#canvasBtn1').removeClass('hide');
+									$('#canvasBtn2').removeClass('hide');
+									$('.color-buttons').removeClass('hide').removeClass('hide');
 									$('#register').click(registerUsername);
 									$('#username').focus();
 									$('#start').removeAttr('disabled').html("Stop")
@@ -957,7 +960,7 @@ function createRoom(roomId) {
         room: roomId,
         description: "My specific room",
         is_private: false,
-        publishers: 6,
+        publishers: 2,
         bitrate: 128000,
         audiocodec: "opus",
         videocodec: "vp8"

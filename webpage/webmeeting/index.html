@@ -129,8 +129,18 @@
 	
 	<hr>
 	<canvas class= "hide" id="canvas"></canvas>
+	<div class="color-buttons hide">
+        <button style="background-color: red;" onclick="changeColor('red')"></button>
+        <button style="background-color: green;" onclick="changeColor('green')"></button>
+        <button style="background-color: blue;" onclick="changeColor('blue')"></button>
+        <button style="background-color: black;" onclick="changeColor('black')"></button>
+    </div>
+	<div>
+		<button class= "hide" id="canvasBtn1" onclick="captureScreen()">Capture</button>
+		<button class= "hide" id="canvasBtn2" onclick="submitCanvas()">Submit</button>
+	</div>
 	</div>
 </div>
-
+<script type="text/javascript" src="whiteboard.js" ></script>
 </body>
 </html>
