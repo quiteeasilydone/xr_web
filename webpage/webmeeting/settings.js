@@ -56,7 +56,7 @@ var server = null;
 // 	server = "https://" + window.location.hostname + "/janus";
 // else
 // 	server = "wss://" + window.location.hostname + "/janus-ws";
-server = "wss://rtctest.p-e.kr/janus-ws";
+server = "wss://" + window.location.hostname+ "/janus-ws";
 
 // server = "https://" + window.location.hostname + "/janus/";
 

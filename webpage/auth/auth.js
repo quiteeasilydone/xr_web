@@ -30,8 +30,10 @@ function setCookie(name, value, hours) {
 
 // 응답 데이터로 쿠키 설정 함수
 function setAuthCookies(data) {
-  setCookie("email", data.email, 1); // 1시간 유효한 쿠키
-  setCookie("name", data.name, 1); // 1시간 유효한 쿠키
+  console.log("쿠키 설정");
+  setCookie("company", data.company_name, 1); // 1시간 유효한 쿠키
+  setCookie("employee_number", data.employee_identification_number, 1); // 1시간 유효한 쿠키
+  redirectToMenu();
 }
 
 // 응답 데이터를 콘솔에 출력하는 함수
@@ -82,8 +84,10 @@ function checkEmail(email) {
   })
     .then((response) => response.json())
     .then((data) => {
-      if (data.exists) {
-        console.log("User exists:", data.user);
+      console.log(data);
+      if (data.company_name) {
+        console.log("User exists:", data);
+        setAuthCookies(data);
         // 유저가 존재할 경우 처리할 로직
       } else {
         console.log("User does not exist");

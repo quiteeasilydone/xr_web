@@ -12,7 +12,7 @@ CREATE TABLE users(
     user_id SERIAL PRIMARY KEY,
     email VARCHAR(255) NOT NULL,
     company_name VARCHAR(255) NOT NULL UNIQUE, -- 사용자 닉네임 -- 추후에 company_name으로 수정
-    wearable_identification_number INT[], -- 1:n
+    wearable_identification VARCHAR(100)[], -- 1:n
     employee_identification_number BIGINT NOT NULL UNIQUE -- 사원번호, 회원가입할 때 직접 입력
 );
 

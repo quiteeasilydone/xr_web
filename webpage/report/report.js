@@ -353,7 +353,7 @@ function generateJson() {
 
 function sendRequest(jsonData) {
   // HTTP POST 요청을 보낼 URL
-  const url = "https://rtctest.p-e.kr/api/reports";
+  const url = "https://" + window.location.hostname + "/api/reports";
 
   // // HTTP 요청 옵션 설정
   const requestOptions = {

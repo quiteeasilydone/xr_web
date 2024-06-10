@@ -22,6 +22,7 @@
     <div id="user-info">
       <span id="user-email"></span>
       <span id="user-name"></span>
+      <button onclick="logout()">로그아웃</button>
     </div>
     <div id="container">
       <div id="menu-message">Please select menu</div>
@@ -58,17 +59,44 @@
 
       // 페이지 로드 시 이메일과 이름을 표시
       document.addEventListener("DOMContentLoaded", () => {
-        const email = getCookie("email");
-        const name = getCookie("name");
+        const company = getCookie("company");
+        const number = getCookie("employee_number");
 
-        if (email) {
-          document.getElementById("user-email").textContent = `Email: ${email}`;
+        if (company) {
+          document.getElementById(
+            "user-email"
+          ).textContent = `회사: ${company}`;
+        } else {
+          console.log("쿠키가 없네요");
+          window.location.href = "/login";
         }
 
-        if (name) {
-          document.getElementById("user-name").textContent = `Name: ${name}`;
+        if (number) {
+          document.getElementById(
+            "user-name"
+          ).textContent = `회사 번호: ${number}`;
+        } else {
+          window.location.href = "/login";
         }
       });
+    </script>
+
+    <script>
+      function deleteAllCookies() {
+        const cookies = document.cookie.split(";");
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i];
+          const eqPos = cookie.indexOf("=");
+          const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
+          document.cookie =
+            name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+        }
+      }
+
+      function logout() {
+        deleteAllCookies();
+        window.location.href = "https://accounts.google.com/Logout";
+      }
     </script>
   </body>
 </html>

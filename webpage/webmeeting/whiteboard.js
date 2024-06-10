@@ -64,7 +64,7 @@ function captureScreen() {
 }
 
 async function submitCanvas() {
-    const submitUrl = "https://rtctest.p-e.kr/api/whiteboard"
+    const submitUrl = "https://" + window.location.hostname + "/api/whiteboard";
     const dataUrl = canvas.toDataURL('image/jpeg', 0.5);
     const fileName = document.getElementById('remote1').innerText;
     console.log(fileName)

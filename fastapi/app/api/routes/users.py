@@ -83,8 +83,8 @@ def generate_qr_code(data: str) -> io.BytesIO:
 
 
 # 웹에서 호출하면 QR코드화면 호스팅
-@router.get("/api/wearable-qr-image")
-async def registration_wearable(request: Request, body: request_user):
+@router.post("/api/wearable-qr-image")
+async def get_qr_image(request: Request, body: request_user):
     company_name = body.company_name
     if not company_name:
         raise HTTPException(status_code=400, detail="company name is required")
@@ -108,7 +108,7 @@ async def registration_wearable(request: Request, body: WearableIdentifier):
     try:
         # 회사 이름을 통해 사용자 검색
         query = """
-        SELECT wearable_identification_number FROM users 
+        SELECT wearable_identification FROM users 
         WHERE company_name = $1
         """
         result = await conn.fetchrow(query, body.company_name)
@@ -116,22 +116,22 @@ async def registration_wearable(request: Request, body: WearableIdentifier):
         if result is None:
             return {"message": "User not found."}
 
-        wearable_ids = result['wearable_identification_number']
+        wearable_ids = result['wearable_identification']
         
         if wearable_ids is None:
             wearable_ids = []
 
-        if body.wearable_identification_number in wearable_ids:
+        if body.wearable_identification in wearable_ids:
             return {"message": "Data pair already exists"}
         
-        # wearable_identification_number 배열에 새로운 요소 추가
+        # wearable_identification 배열에 새로운 요소 추가
         update_query = """
         UPDATE users
-        SET wearable_identification_number = array_append(wearable_identification_number, $1)
+        SET wearable_identification = array_append(wearable_identification, $1)
         WHERE company_name = $2
         RETURNING company_name
         """
-        company_name = await conn.fetchval(update_query, body.wearable_identification_number, body.company_name)
+        company_name = await conn.fetchval(update_query, body.wearable_identification, body.company_name)
         
         return {"message": "Successfully registered.", "company_name": company_name}
     
@@ -143,15 +143,15 @@ async def registration_wearable(request: Request, body: WearableIdentifier):
 
 
 # 회사가 가지고 있는 모든 안드로이드 기기의 list return
-@router.get("/api/wearable-machine-lists")
-async def registration_wearable(request: Request, body: Company):
-    # wearable_identification_number INT[] 의 모든 요소를 return
+@router.post("/api/wearable-machine-lists")
+async def get_wearable_machine_lists(request: Request, body: Company):
+    # wearable_identification INT[] 의 모든 요소를 return
     conn = await postgres_connection.connect_db()
 
     try:
-        # 회사 이름을 통해 wearable_identification_number 배열 검색
+        # 회사 이름을 통해 wearable_identification 배열 검색
         query = """
-        SELECT wearable_identification_number FROM users 
+        SELECT wearable_identification FROM users 
         WHERE company_name = $1
         """
         result = await conn.fetchrow(query, body.company_name)
@@ -159,9 +159,9 @@ async def registration_wearable(request: Request, body: Company):
         if result is None:
             raise HTTPException(status_code=404, detail="Company not found")
 
-        wearable_ids = result['wearable_identification_number']
+        wearable_ids = result['wearable_identification']
         
-        return {"wearable_identification_numbers": wearable_ids}
+        return {"wearable_identifications": wearable_ids}
     
     except Exception as e:
         await conn.close()
