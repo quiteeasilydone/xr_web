@@ -35,6 +35,12 @@
       <button class="menu-button" onclick="redirectToConference()">
         화상회의
       </button>
+      <button class="menu-button" onclick="redirectToRegisterMachine()">
+        기기 등록
+      </button>
+      <button class="menu-button" onclick="redirectToRegisterInfra()">
+        설비 등록
+      </button>
     </div>
 
     <script>
@@ -48,6 +54,14 @@
 
       function redirectToConference() {
         window.location.href = "/webmeeting";
+      }
+
+      function redirectToRegisterMachine() {
+        window.location.href = "/register-machine";
+      }
+
+      function redirectToRegisterInfra() {
+        window.location.href = "/register-infra";
       }
 
       // 쿠키 값을 읽는 함수
