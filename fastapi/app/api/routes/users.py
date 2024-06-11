@@ -84,7 +84,7 @@ def generate_qr_code(data: str) -> io.BytesIO:
 
 # 웹에서 호출하면 QR코드화면 호스팅
 @router.post("/api/wearable-qr-image")
-async def get_qr_image(request: Request, body: request_user):
+async def get_qr_image_for_registering(request: Request, body: request_user):
     company_name = body.company_name
     if not company_name:
         raise HTTPException(status_code=400, detail="company name is required")
@@ -101,7 +101,7 @@ async def get_qr_image(request: Request, body: request_user):
 
 # 안드로이드 기기에서 식별자 데이터 서버로 전송( {회사 이름, 식별자 데이터} ) - DB에 저장
 @router.post("/api/send-wearable-identification")
-async def registration_wearable(request: Request, body: WearableIdentifier):
+async def registration_wearable_to_db(request: Request, body: WearableIdentifier):
     conn = await postgres_connection.connect_db()
 
 

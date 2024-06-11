@@ -1,19 +1,20 @@
 CREATE TYPE instruction_type AS ENUM ('check', 'multiple_choice', 'single_choice', 'multiple_select', 'numeric_input');
 
 
-
-CREATE TABLE infras(
-    infra_id SERIAL PRIMARY KEY,
-    infra_name VARCHAR(255) NOT NULL
-    -- infra_location POINT, -- 위 경도 좌표
-);
-
 CREATE TABLE users(
     user_id SERIAL PRIMARY KEY,
     email VARCHAR(255) NOT NULL,
     company_name VARCHAR(255) NOT NULL UNIQUE, -- 사용자 닉네임 -- 추후에 company_name으로 수정
     wearable_identification VARCHAR(100)[], -- 1:n
     employee_identification_number BIGINT NOT NULL UNIQUE -- 사원번호, 회원가입할 때 직접 입력
+);
+
+CREATE TABLE infras(
+    infra_id SERIAL PRIMARY KEY,
+    infra_name VARCHAR(255) NOT NULL,
+    company_name VARCHAR(255) NOT NULL, -- 작성자의 이름 또는 아이디(아이디를 만드는 것이 좋을것 같음)
+    FOREIGN KEY (company_name) REFERENCES users(company_name) ON DELETE CASCADE
+    -- infra_location POINT, -- 위 경도 좌표
 );
 
 CREATE TABLE report_forms (

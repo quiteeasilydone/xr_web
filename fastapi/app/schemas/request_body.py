@@ -55,3 +55,8 @@ class WearableIdentifier(BaseModel):
 # 회사 이름 request 모델 
 class Company(BaseModel):
     company_name: str
+
+# Infra request 모델
+class Infra(BaseModel):
+    infra_name: str
+    company_name: str

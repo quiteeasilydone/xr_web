@@ -1,16 +1,12 @@
-const cookie  = getCookie('company');
-console.log(cookie)
-
 async function makeQr() {
     try{
         const companyName  = getCookie('company');
         const employeeIdentificationNumber = getCookie('employee_number');
         const imgDiv = document.getElementById('qr');
     
-        console.log(typeof(Number(employeeIdentificationNumber)))
         const qrUrl = "https://" + window.location.hostname + "/api/wearable-qr-image";
         requsetBody = {
-            employee_identification_number : 0,
+            employee_identification_number : Number(employeeIdentificationNumber),
             company_name : companyName,
             email : "dummy@example.com"
         };
@@ -36,6 +32,9 @@ async function makeQr() {
         img.src = imageUrl;
         imgDiv.appendChild(img);
     } catch (error) {
+        if (companyName === undefined) {
+            alert("다시 로그인 하십시오");
+        }
         console.error(error)
     }
 }
