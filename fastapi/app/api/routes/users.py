@@ -168,3 +168,26 @@ async def get_wearable_machine_lists(request: Request, body: Company):
 
         # 오류 발생 시 오류 메시지 반환
         raise HTTPException(status_code=500, detail=f"Error occur: {str(e)}")
+
+@router.get("/api/wearable-machine-check/{android_UUID}")
+async def get_wearable_machine_check(android_UUID : str):
+    conn = await postgres_connection.connect_db()
+    
+    try:
+        query = """
+        SELECT *
+        FROM users
+        WHERE $1 = ANY(wearable_identification);
+        """
+        
+        result = await conn.fetchrow(query, android_UUID)
+        
+        if result is None:
+            return {"result" : False}
+        else:
+            return {"result" : True}
+        
+    except Exception as e:
+        await conn.close()
+        
+        raise HTTPException(status_code=500, detail=f"Error occur: {str(e)}")

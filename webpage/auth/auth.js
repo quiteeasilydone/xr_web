@@ -74,6 +74,7 @@ function authenticateUser(code, callback) {
 
 function checkEmail(email) {
   console.log(`Checking email: ${email}`);
+  sessionStorage.setItem("emailToCheck", email);
 
   fetch("/api/login", {
     method: "POST",
@@ -91,6 +92,7 @@ function checkEmail(email) {
         // 유저가 존재할 경우 처리할 로직
       } else {
         console.log("User does not exist");
+        window.location.href = "/signup";
         // 유저가 존재하지 않을 경우 처리할 로직
       }
     })
