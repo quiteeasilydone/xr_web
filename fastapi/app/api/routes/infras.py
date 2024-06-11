@@ -81,6 +81,9 @@ async def get_recent_report_form(company_name: str, infra: str = None):
 @router.get("/api/infra-list")
 async def get_infra_list(company_name: str):
     try:
+        if not company_name:
+            raise HTTPException(status_code=400, detail="Company name is missing in query parameters")
+
         # DB 연결
         conn = await postgres_connection.connect_db()
 

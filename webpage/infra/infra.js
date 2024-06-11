@@ -1,3 +1,5 @@
+const companyName = getCookie('company')
+
 // document.addEventListener("DOMContentLoaded", function () {
 //
 
@@ -28,7 +30,7 @@ function redirectToReport(infra) {
 
 function fetchInfraList() {
   // fetch 함수는 프로미스를 반환하므로 해당 프로미스를 반환
-  return fetch("/api/infra-list")
+  return fetch(`/api/infra-list?company_name=${companyName}`)
     .then((response) => response.json())
     .then((data) => {
       // 서버에서 받은 데이터 반환

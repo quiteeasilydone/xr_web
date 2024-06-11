@@ -32,7 +32,6 @@ class ReportForm(BaseModel):
 class InspectedReport(BaseModel):
     start_time: str
     end_time: str
-    report_form_id: str
     company_name: str
     infra: str
     inspection_list: List[InspectionForm]

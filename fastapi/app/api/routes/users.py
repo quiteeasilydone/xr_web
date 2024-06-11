@@ -12,6 +12,7 @@ from schemas.request_body import Company
 from typing import List
 from db import postgres_connection
 
+import json
 import qrcode # QR 코드를 생성하기 위한 라이브러리
 import io # QR 코드를 메모리에 저장하기 위한 라이브러리
 import base64 # QR 코드를 인코딩하기 위한 라이브러리
@@ -99,47 +100,101 @@ async def get_qr_image_for_registering(request: Request, body: request_user):
         raise HTTPException(status_code=500, detail=f"Error generating QR code: {str(e)}")
 
 
-# 안드로이드 기기에서 식별자 데이터 서버로 전송( {회사 이름, 식별자 데이터} ) - DB에 저장
-@router.post("/api/send-wearable-identification")
-async def registration_wearable_to_db(request: Request, body: WearableIdentifier):
-    conn = await postgres_connection.connect_db()
+# (로그인 한 사용자가) infra를 입력하면 infra에 해당하는 보고서 양식을 가져갈 수 있도록 QR 이미지 호스팅
+@router.post("/api/report-form-qr-image")
+async def get_qr_image_for_getting_report_form(request: Request, body: request_user, infra: str):
+    company_name = body.company_name
 
+    if not infra:
+        raise HTTPException(status_code=400, detail="Infra name is missing in request body")
+    if not company_name:
+        raise HTTPException(status_code=400, detail="Company name is missing in request body")
 
     try:
-        # 회사 이름을 통해 사용자 검색
-        query = """
-        SELECT wearable_identification FROM users 
-        WHERE company_name = $1
-        """
-        result = await conn.fetchrow(query, body.company_name)
-        
-        if result is None:
-            return {"message": "User not found."}
+        # 데이터베이스 연결
+        conn = await postgres_connection.connect_db()
 
-        wearable_ids = result['wearable_identification']
-        
-        if wearable_ids is None:
-            wearable_ids = []
+        # 보고서 양식 데이터 가져오기
+        report_form = await conn.fetchrow('''
+            SELECT * FROM report_forms
+            WHERE infra_id = (
+                SELECT infra_id FROM infras WHERE infra_name = $1 AND company_name = $2
+            )
+            ORDER BY last_modified_time DESC
+            LIMIT 1;
+        ''', infra, company_name)
 
-        if body.wearable_identification in wearable_ids:
-            return {"message": "Data pair already exists"}
-        
-        # wearable_identification 배열에 새로운 요소 추가
-        update_query = """
-        UPDATE users
-        SET wearable_identification = array_append(wearable_identification, $1)
-        WHERE company_name = $2
-        RETURNING company_name
-        """
-        company_name = await conn.fetchval(update_query, body.wearable_identification, body.company_name)
-        
-        return {"message": "Successfully registered.", "company_name": company_name}
-    
-    except Exception as e:
+        if not report_form:
+            raise HTTPException(status_code=404, detail=f'No report form found for infra "{infra}" and company "{company_name}"')
+
+        # Retrieve inspection list
+        inspection_list = await conn.fetch('''
+            SELECT 
+                t.topic_form_name, 
+                t.image_required, 
+                array_agg(
+                    json_build_object(
+                        'instruction', i.instruction,
+                        'instruction_type', i.instruction_type,
+                        'options', i.options,
+                        'answer', i.answer
+                    )
+                ) AS instruction_list
+            FROM 
+                topic_forms t
+            JOIN 
+                instruction_forms i ON t.topic_form_id = i.topic_form_id
+            WHERE 
+                t.report_form_id = $1
+            GROUP BY 
+                t.topic_form_name, t.image_required
+        ''', report_form['report_form_id'])
+
+        # Format the response data
+        response_data = {
+            "infra_name": infra,
+            "report_form_id": report_form['report_form_id'],
+            "inspection_list": []
+        }
+
+        for record in inspection_list:
+            inspection = {
+                "topic": record["topic_form_name"],
+                "instruction_list": [],
+                "image_required": record["image_required"]
+            }
+            for instruction_json in record["instruction_list"]:
+                instruction = json.loads(instruction_json)
+                instruction_data = {
+                    "instruction": instruction["instruction"],
+                    "instruction_type": instruction["instruction_type"],
+                    "options": instruction["options"],
+                    "answer": instruction["answer"]
+                }
+                inspection["instruction_list"].append(instruction_data)
+            response_data["inspection_list"].append(inspection)
+
+        # 데이터베이스 연결 종료
         await conn.close()
 
-        # 오류 발생 시 오류 메시지 반환
-        raise HTTPException(status_code=500, detail=f"Error occur: {str(e)}")
+        # JSON 데이터를 문자열로 변환
+        report_form_json = json.dumps(response_data)
+
+        # QR 코드 생성
+        qr_image = generate_qr_code(report_form_json)
+        
+        # # 로컬 파일로 저장
+        # file_path = f"/usr/src/fastapi_app/api/{infra}_report_form_qr.png"
+        # with open(file_path, "wb") as file:
+        #     file.write(qr_image.getvalue())
+
+        # QR 코드 이미지 파일 반환
+        return StreamingResponse(qr_image, media_type="image/png")
+
+
+
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
 
 
 # 회사가 가지고 있는 모든 안드로이드 기기의 list return
