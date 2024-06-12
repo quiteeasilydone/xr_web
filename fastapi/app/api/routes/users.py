@@ -230,7 +230,7 @@ async def get_wearable_machine_check(android_UUID : str):
     
     try:
         query = """
-        SELECT *
+        SELECT company_name
         FROM users
         WHERE $1 = ANY(wearable_identification);
         """
@@ -238,9 +238,9 @@ async def get_wearable_machine_check(android_UUID : str):
         result = await conn.fetchrow(query, android_UUID)
         
         if result is None:
-            return {"result" : False}
+            return {"result" : False, "company_name" : None}
         else:
-            return {"result" : True}
+            return {"result" : True, "company_name" : result}
         
     except Exception as e:
         await conn.close()

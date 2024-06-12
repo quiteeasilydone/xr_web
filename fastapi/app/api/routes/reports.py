@@ -28,8 +28,9 @@ async def submit_report_form(request: Request, data: ReportForm):
     conn = await postgres_connection.connect_db()
 
     try:
+        unix_last_modified_time = int(last_modified_time_str)
         # Convert last_modified_time from string to datetime
-        last_modified_time = datetime.strptime(last_modified_time_str, "%Y-%m-%dT%H:%M:%S")
+        last_modified_time = datetime.fromtimestamp(unix_last_modified_time)
 
         # Check if infra_name already exists in the infras table
         infra_id = await conn.fetchval('''
@@ -46,8 +47,8 @@ async def submit_report_form(request: Request, data: ReportForm):
             WHERE infra_id = $1 AND company_name = $2
         ''', infra_id, company_name)
 
-        # Convert last_modified_time from string to datetime
-        last_modified_time = datetime.strptime(last_modified_time_str, "%Y-%m-%dT%H:%M:%S")
+        # # Convert last_modified_time from string to datetime
+        # last_modified_time = datetime.strptime(last_modified_time_str, "%Y-%m-%dT%H:%M:%S")
 
         # If a report form already exists, update it and related tables
         if existing_report_id:
