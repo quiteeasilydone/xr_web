@@ -113,6 +113,13 @@ async def add_infra(infra: Infra):
     conn = await postgres_connection.connect_db()
 
     try:
+        # 동일한 infra_name이 존재하는지 확인
+        existing_infra = await conn.fetchval('''
+            SELECT infra_id FROM infras WHERE infra_name = $1
+        ''', infra_name)
+
+        if existing_infra:
+            raise HTTPException(status_code=406, detail="Infra name is already exists.")
         # infras에 infra_name과 company_name row 추가
         await conn.execute('''
             INSERT INTO infras (infra_name, company_name) 

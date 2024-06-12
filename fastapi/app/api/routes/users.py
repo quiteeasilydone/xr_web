@@ -92,7 +92,7 @@ async def get_qr_image_for_registering(request: Request, body: request_user):
 
     try:
         # Generate the QR code with the company name
-        qr_data = f"company_name: {company_name}"
+        qr_data = {"company_name": company_name}
         qr_image = generate_qr_code(qr_data)
 
         return StreamingResponse(qr_image, media_type="image/png")
@@ -111,90 +111,13 @@ async def get_qr_image_for_getting_report_form(request: Request, body: request_u
         raise HTTPException(status_code=400, detail="Company name is missing in request body")
 
     try:
-        # 데이터베이스 연결
-        conn = await postgres_connection.connect_db()
+        # Generate the QR code with the company name
+        qr_data = {"company_name": company_name, "infra_name": infra}
+        qr_image = generate_qr_code(qr_data)
 
-        # 보고서 양식 데이터 가져오기
-        report_form = await conn.fetchrow('''
-            SELECT * FROM report_forms
-            WHERE infra_id = (
-                SELECT infra_id FROM infras WHERE infra_name = $1 AND company_name = $2
-            )
-            ORDER BY last_modified_time DESC
-            LIMIT 1;
-        ''', infra, company_name)
-
-        if not report_form:
-            raise HTTPException(status_code=404, detail=f'No report form found for infra "{infra}" and company "{company_name}"')
-
-        # Retrieve inspection list
-        inspection_list = await conn.fetch('''
-            SELECT 
-                t.topic_form_name, 
-                t.image_required, 
-                array_agg(
-                    json_build_object(
-                        'instruction', i.instruction,
-                        'instruction_type', i.instruction_type,
-                        'options', i.options,
-                        'answer', i.answer
-                    )
-                ) AS instruction_list
-            FROM 
-                topic_forms t
-            JOIN 
-                instruction_forms i ON t.topic_form_id = i.topic_form_id
-            WHERE 
-                t.report_form_id = $1
-            GROUP BY 
-                t.topic_form_name, t.image_required
-        ''', report_form['report_form_id'])
-
-        # Format the response data
-        response_data = {
-            "infra_name": infra,
-            "report_form_id": report_form['report_form_id'],
-            "inspection_list": []
-        }
-
-        for record in inspection_list:
-            inspection = {
-                "topic": record["topic_form_name"],
-                "instruction_list": [],
-                "image_required": record["image_required"]
-            }
-            for instruction_json in record["instruction_list"]:
-                instruction = json.loads(instruction_json)
-                instruction_data = {
-                    "instruction": instruction["instruction"],
-                    "instruction_type": instruction["instruction_type"],
-                    "options": instruction["options"],
-                    "answer": instruction["answer"]
-                }
-                inspection["instruction_list"].append(instruction_data)
-            response_data["inspection_list"].append(inspection)
-
-        # 데이터베이스 연결 종료
-        await conn.close()
-
-        # JSON 데이터를 문자열로 변환
-        report_form_json = json.dumps(response_data)
-
-        # QR 코드 생성
-        qr_image = generate_qr_code(report_form_json)
-        
-        # # 로컬 파일로 저장
-        # file_path = f"/usr/src/fastapi_app/api/{infra}_report_form_qr.png"
-        # with open(file_path, "wb") as file:
-        #     file.write(qr_image.getvalue())
-
-        # QR 코드 이미지 파일 반환
         return StreamingResponse(qr_image, media_type="image/png")
-
-
-
     except Exception as e:
-        return JSONResponse(content={"error": str(e)}, status_code=500)
+        raise HTTPException(status_code=500, detail=f"Error generating QR code: {str(e)}")
 
 
 # 회사가 가지고 있는 모든 안드로이드 기기의 list return
@@ -242,6 +165,28 @@ async def get_wearable_machine_check(android_UUID : str):
         else:
             return {"result" : True, "company_name" : result}
         
+    except Exception as e:
+        await conn.close()
+        
+        raise HTTPException(status_code=500, detail=f"Error occur: {str(e)}")
+
+@router.post("/api/registrate-machine-to-company")
+async def registrate_machine_to_company(wearable_identifier : WearableIdentifier):
+    conn = await postgres_connection.connect_db()
+    
+    try:
+        wearable_identification = wearable_identifier.wearable_identification
+        company_name = wearable_identifier.company_name
+        
+        query = """
+        UPDATE users
+        SET wearable_identification = array_append(wearable_identification, $1)
+        WHERE company_name = $2;
+        """
+        
+        result = await conn.fetchrow(query, wearable_identification, company_name)
+        
+        return {"result" : result}
     except Exception as e:
         await conn.close()
         

@@ -21,7 +21,7 @@ CREATE TABLE report_forms (
     report_form_id SERIAL PRIMARY KEY,
     infra_id INT NOT NULL,
     company_name VARCHAR(255) NOT NULL, -- 작성자의 이름 또는 아이디(아이디를 만드는 것이 좋을것 같음)
-    last_modified_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- 마지막으로 수정된 시간
+    last_modified_time BIGINT, -- 마지막으로 수정된 시간
     FOREIGN KEY (infra_id) REFERENCES infras(infra_id) ON DELETE CASCADE,
     FOREIGN KEY (company_name) REFERENCES users(company_name) ON DELETE CASCADE
 );

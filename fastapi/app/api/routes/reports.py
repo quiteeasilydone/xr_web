@@ -15,7 +15,7 @@ router = APIRouter()
 async def submit_report_form(request: Request, data: ReportForm):
     # json data parsing
     infra_name = data.infra
-    last_modified_time_str = data.last_modified_time
+    last_modified_time = int(data.last_modified_time)
 
     # company_name
     company_name = data.company_name
@@ -28,10 +28,6 @@ async def submit_report_form(request: Request, data: ReportForm):
     conn = await postgres_connection.connect_db()
 
     try:
-        unix_last_modified_time = int(last_modified_time_str)
-        # Convert last_modified_time from string to datetime
-        last_modified_time = datetime.fromtimestamp(unix_last_modified_time)
-
         # Check if infra_name already exists in the infras table
         infra_id = await conn.fetchval('''
             SELECT infra_id FROM infras WHERE infra_name = $1
@@ -47,8 +43,6 @@ async def submit_report_form(request: Request, data: ReportForm):
             WHERE infra_id = $1 AND company_name = $2
         ''', infra_id, company_name)
 
-        # # Convert last_modified_time from string to datetime
-        # last_modified_time = datetime.strptime(last_modified_time_str, "%Y-%m-%dT%H:%M:%S")
 
         # If a report form already exists, update it and related tables
         if existing_report_id:
@@ -243,7 +237,7 @@ async def get_report_form(request: Request, body: SubmittedReportForm):
 
         # Build the query to get the most recent report_form_id for the given infra_id
         query = '''
-            SELECT report_form_id 
+            SELECT report_form_id, last_modified_time
             FROM report_forms 
             WHERE infra_id = $1
         '''
@@ -255,7 +249,14 @@ async def get_report_form(request: Request, body: SubmittedReportForm):
 
         query += ' ORDER BY report_form_id DESC LIMIT 1'
 
-        report_form_id = await conn.fetchval(query, *params)
+        data_from_db = await conn.fetchrow(query, *params)
+        print(data_from_db)
+
+        # Extract the values from the row
+        report_form_id = data_from_db['report_form_id']
+        last_modified_time = data_from_db['last_modified_time']
+
+
         if not report_form_id:
             raise HTTPException(status_code=404, detail=f"No report form found for infra '{infra_name}'")
 
@@ -288,6 +289,7 @@ async def get_report_form(request: Request, body: SubmittedReportForm):
         # Format the response data
         response_data = {
             "infra_name": infra_name,
+            "last_modified_time": last_modified_time,
             "report_form_id": report_form_id,
             "inspection_list": []
         }
