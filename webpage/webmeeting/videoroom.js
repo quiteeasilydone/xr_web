@@ -10,8 +10,6 @@ var sfutest = null;
 var opaqueId = "videoroomtest-"+Janus.randomString(12);
 
 var myroom = null;	// Demo room
-if(getQueryStringValue("room") !== "")
-	myroom = parseInt(getQueryStringValue("room"));
 var myusername = null;
 var myid = null;
 var mystream = null;
@@ -43,7 +41,7 @@ $(document).ready(function() {
 				bootbox.alert("No WebRTC support... ");
 				return;
 			}
-			myroom = document.getElementById('room-name').value;
+			myroom = document.getElementById("machineSelect").value;
 			// Create session
 			janus = new Janus(
 				{

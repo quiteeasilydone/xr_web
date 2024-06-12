@@ -32,6 +32,7 @@ async function makeQr() {
         img.src = imageUrl;
         imgDiv.appendChild(img);
     } catch (error) {
+        const companyName  = getCookie('company');
         if (companyName === undefined) {
             alert("다시 로그인 하십시오");
         }

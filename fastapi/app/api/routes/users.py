@@ -8,6 +8,7 @@ from schemas.response_body import User as response_user
 from schemas.request_body import User as request_user
 from schemas.request_body import WearableIdentifier
 from schemas.request_body import Company
+from schemas.request_body import Infra
 
 from typing import List
 from db import postgres_connection
@@ -20,30 +21,30 @@ import base64 # QR 코드를 인코딩하기 위한 라이브러리
 router = APIRouter()
 
 
-# 더미 사용자 생성
-@router.post("/api/user")
-async def make_dummy_company(request: Request):
+# # 더미 사용자 생성
+# @router.post("/api/user")
+# async def make_dummy_company(request: Request):
 
-    # 임시 company_name 0000
-    company_name = "dummy"
-    email = "dummy_company12@gmail.com"
-    employee_identification_number = 8888
+#     # 임시 company_name 0000
+#     company_name = "dummy"
+#     email = "dummy_company12@gmail.com"
+#     employee_identification_number = 8888
 
-    conn = await postgres_connection.connect_db()
+#     conn = await postgres_connection.connect_db()
 
-    try:
-        await conn.fetch('''
-            INSERT INTO users ("company_name", "email", "employee_identification_number")
-            VALUES ($1, $2, $3)
-        ''', company_name, email, employee_identification_number
-        )
+#     try:
+#         await conn.fetch('''
+#             INSERT INTO users ("company_name", "email", "employee_identification_number")
+#             VALUES ($1, $2, $3)
+#         ''', company_name, email, employee_identification_number
+#         )
         
-        await conn.close()
-        return JSONResponse(content={"message": "Data saved successfully"}, status_code=200)
+#         await conn.close()
+#         return JSONResponse(content={"message": "Data saved successfully"}, status_code=200)
         
-    except Exception as e:
-        await conn.close()
-        raise HTTPException(status_code=500, detail=f"Error saving data: {str(e)}")
+#     except Exception as e:
+#         await conn.close()
+#         raise HTTPException(status_code=500, detail=f"Error saving data: {str(e)}")
 
 # DB에 있는 모든 유저 정보 돌려주기
 @router.post("/api/users", response_model=List[response_user])
@@ -101,9 +102,10 @@ async def get_qr_image_for_registering(request: Request, body: request_user):
 
 
 # (로그인 한 사용자가) infra를 입력하면 infra에 해당하는 보고서 양식을 가져갈 수 있도록 QR 이미지 호스팅
-@router.post("/api/report-form-qr-image")
-async def get_qr_image_for_getting_report_form(request: Request, body: request_user, infra: str):
+@router.post("/api/infra-qr-image")
+async def get_qr_image_for_registrate_infra(request: Request, body: Infra):
     company_name = body.company_name
+    infra = body.infra_name
 
     if not infra:
         raise HTTPException(status_code=400, detail="Infra name is missing in request body")

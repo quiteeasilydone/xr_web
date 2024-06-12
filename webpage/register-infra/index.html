@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>설비 등록 페이지</title>
+    <link rel="stylesheet" type="text/css" href="../styles.css" />
+    <link rel="stylesheet" type="text/css" href="infra.css" />
+    <style>
+      #user-info {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        text-align: right;
+      }
+      #user-info span {
+        display: block;
+      }
+    </style>
+    <script src="../user-info.js"></script>
+    <script src="../auth/cookie.js"></script>
+  </head>
+  <body>
+    <div id="container">
+      <h2>설비 등록</h2>
+      <input type="text" id="infraName">
+      <button id="infraRegisterBtn" onclick="sendRegisterRequest()">등록</button>
+    </div>
+    <div id="infraQr"></div>
+    <script>
+      // 쿠키 값을 읽는 함수
+      function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(";").shift();
+      }
+
+      // 페이지 로드 시 이메일과 이름을 표시
+      document.addEventListener("DOMContentLoaded", () => {
+        const email = getCookie("email");
+        const name = getCookie("name");
+
+        if (email) {
+          document.getElementById("user-email").textContent = `Email: ${email}`;
+        }
+
+        if (name) {
+          document.getElementById("user-name").textContent = `Name: ${name}`;
+        }
+      });
+    </script>
+    <script src="register-infra.js"></script>
+  </body>
+</html>
