@@ -170,6 +170,7 @@ async def get_wearable_machine_check(android_UUID : str):
         
         raise HTTPException(status_code=500, detail=f"Error occur: {str(e)}")
 
+# TODO: 하나의 company_name에 중복된 UUID 입력시 예외처리
 @router.post("/api/registrate-machine-to-company")
 async def registrate_machine_to_company(wearable_identifier : WearableIdentifier):
     conn = await postgres_connection.connect_db()
@@ -186,7 +187,7 @@ async def registrate_machine_to_company(wearable_identifier : WearableIdentifier
         
         result = await conn.fetchrow(query, wearable_identification, company_name)
         
-        return {"result" : result}
+        return {"result" : True}
     except Exception as e:
         await conn.close()
         
