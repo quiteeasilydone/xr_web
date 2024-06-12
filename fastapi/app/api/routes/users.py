@@ -165,7 +165,7 @@ async def get_wearable_machine_check(android_UUID : str):
         if result is None:
             return {"result" : False, "company_name" : None}
         else:
-            return {"result" : True, "company_name" : result}
+            return {"result" : True, "company_name" : result["company_name"]}
         
     except Exception as e:
         await conn.close()

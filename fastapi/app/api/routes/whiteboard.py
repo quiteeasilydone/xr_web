@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Request, HTTPException, UploadFile, File
 import asyncio
 from datetime import datetime, timedelta
+from schemas.request_body import WhiteboardRequest
 
 router = APIRouter()
 
@@ -16,9 +17,9 @@ async def remove_file_after_timeout(file_id: str, timeout: int):
         del removal_tasks[file_id]
 
 @router.post("/api/whiteboard")
-async def submit_whiteboard(file: UploadFile = File(...)):
-    file_id = file.filename
-    file_content = await file.read()
+async def submit_whiteboard(wb:WhiteboardRequest):
+    file_id = wb.filename
+    file_content = wb.file_content
 
     # 파일을 temp_file에 저장
     temp_file[file_id] = {

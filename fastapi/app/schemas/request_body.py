@@ -59,3 +59,7 @@ class Company(BaseModel):
 class Infra(BaseModel):
     infra_name: str
     company_name: str
+    
+class WhiteboardRequest(BaseModel):
+    filename: str
+    file_content: str

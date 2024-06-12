@@ -67,29 +67,30 @@ async function submitCanvas() {
     const submitUrl = "https://" + window.location.hostname + "/api/whiteboard";
     const dataUrl = canvas.toDataURL('image/jpeg', 0.5);
     const fileName = document.getElementById('remote1').innerText;
-    console.log(fileName)
 
     // Base64 URL을 Blob으로 변환
-    const byteString = atob(dataUrl.split(',')[1]);
-    const mimeString = dataUrl.split(',')[0].split(':')[1].split(';')[0];
+    // const byteString = atob(dataUrl.split(',')[1]);
+    // const mimeString = dataUrl.split(',')[0].split(':')[1].split(';')[0];
 
-    const ab = new ArrayBuffer(byteString.length);
-    const ia = new Uint8Array(ab);
+    // const ab = new ArrayBuffer(byteString.length);
+    // const ia = new Uint8Array(ab);
 
-    for (let i = 0; i < byteString.length; i++) {
-        ia[i] = byteString.charCodeAt(i);
-    }
+    // for (let i = 0; i < byteString.length; i++) {
+    //     ia[i] = byteString.charCodeAt(i);
+    // }
 
-    const blob = new Blob([ab], { type: mimeString });
+    // const blob = new Blob([ab], { type: mimeString });
 
     // FormData에 Blob 추가
-    const formData = new FormData();
-    formData.append('file', blob, fileName);
+    requestBody = {filename : fileName, file_content: dataUrl}
 
     // 파일 전송
     const response = await fetch(submitUrl, {
         method: 'POST',
-        body: formData
+        headers:{
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestBody)
     });
     
     if (response.ok) {
