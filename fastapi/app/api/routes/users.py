@@ -13,6 +13,8 @@ from schemas.request_body import Infra
 from typing import List
 from db import postgres_connection
 
+from janus_client import JanusSession, JanusVideoRoomPlugin
+
 import json
 import qrcode # QR 코드를 생성하기 위한 라이브러리
 import io # QR 코드를 메모리에 저장하기 위한 라이브러리
@@ -172,9 +174,20 @@ async def get_wearable_machine_check(android_UUID : str):
         
         raise HTTPException(status_code=500, detail=f"Error occur: {str(e)}")
 
+async def get_janus():
+    base_url = "wss://rtctest.p-e.kr/janus-ws"
+    session = JanusSession(base_url=base_url)
+    plugin_handle = JanusVideoRoomPlugin()
+    await plugin_handle.attach(session=session)
+    try:
+        yield plugin_handle
+    finally:
+        await plugin_handle.destroy()
+        await session.destroy()
+
 # TODO: 하나의 company_name에 중복된 UUID 입력시 예외처리
 @router.post("/api/registrate-machine-to-company")
-async def registrate_machine_to_company(wearable_identifier : WearableIdentifier):
+async def registrate_machine_to_company(wearable_identifier : WearableIdentifier, plugin_handle: JanusVideoRoomPlugin = Depends(get_janus)):
     conn = await postgres_connection.connect_db()
     
     try:
@@ -188,6 +201,20 @@ async def registrate_machine_to_company(wearable_identifier : WearableIdentifier
         """
         
         result = await conn.fetchrow(query, wearable_identification, company_name)
+        
+        room_config = {
+        "description": "My specific room",
+        "is_private": False,
+        "publishers": 6,
+        "bitrate": 128000,
+        "audiocodec": "opus",
+        "videocodec": "vp8"
+    }
+        
+        create_response = await plugin_handle.create_room(
+            room_id=wearable_identification,
+            configuration = room_config
+        )
         
         return {"result" : True}
     except Exception as e:

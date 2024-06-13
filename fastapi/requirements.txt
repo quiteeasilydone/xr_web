@@ -10,3 +10,4 @@ pydantic
 starlette
 jose
 qrcode[pil]
+janus-client
