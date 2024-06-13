@@ -45,6 +45,7 @@ async def get_posted_reports(infra: str = None, company_name: str = None):
         reports_list = [{
             'posted_report_id': report['posted_report_id'],
             'posted_report_path': report['posted_report_path'],
+            'user_name': report['user_name'],
             'start_time': report['start_time'],
             'end_time': report['end_time'],
             'company_name': report['company_name']
@@ -182,6 +183,33 @@ async def get_posted_report_from_minio_with_infra_company_name(request: Request,
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
 
+# minio에 저장된 특정 보고서 하나 가져오기
+@router.get("/api/posted-reports-detail")
+async def get_posted_reports_detail(request: Request, infra: str, company_name: str, posted_report_id: int):
+    if not infra:
+        raise HTTPException(status_code=400, detail="Infra name is missing in query parameters")
+    if not company_name:
+        raise HTTPException(status_code=400, detail="company_name is missing in query parameters")
+    # posted_report_id 파라미터 확인
+    if not posted_report_id:
+        raise HTTPException(status_code=400, detail="posted_report_id is missing in query parameters")
+    try:
+        bucket_name = os.environ['MINIO_BUCKET']
+        file_name = f"{posted_report_id}.json"
+        file_path = f"/{bucket_name}/{file_name}"
+        response = minio_connection.minio_client.get_object(bucket_name, file_name)
+         # 파일 데이터를 읽어서 반환
+        data = response.read()
+        response.close()
+        response.release_conn()
+        # 바이트 데이터를 문자열로 디코딩 (JSON 형식 가정)
+        data_str = data.decode('utf-8')
+        # JSON 문자열을 파이썬 딕셔너리로 변환
+        report_data = json.loads(data_str)
+        return JSONResponse(content={"message": "Report fetched successfully", "report": report_data}, status_code=200)
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+
 
 @router.post("/api/report")
 async def submit_inspected_report(request: Request, data: request_body.InspectedReport):
@@ -192,6 +220,7 @@ async def submit_inspected_report(request: Request, data: request_body.Inspected
         infra_name = data.infra
         company_name = data.company_name
         inspection_list = data.inspection_list
+        user_name = data.user_name
         
         # Connect to the database
         conn = await postgres_connection.connect_db()
@@ -221,10 +250,10 @@ async def submit_inspected_report(request: Request, data: request_body.Inspected
 
         # Insert data into posted_reports table
         posted_report_id = await conn.fetchval('''
-            INSERT INTO posted_reports (posted_report_path, report_form_id, start_time, end_time, company_name)
-            VALUES ($1, $2, $3, $4, $5)
+            INSERT INTO posted_reports (posted_report_path, report_form_id, start_time, end_time, company_name, user_name)
+            VALUES ($1, $2, $3, $4, $5, $6)
             RETURNING posted_report_id
-        ''', posted_report_path, report_form_id, start_time, end_time, company_name)
+        ''', posted_report_path, report_form_id, start_time, end_time, company_name, user_name)
         await conn.close()
 
         # Save original JSON data to MinIO bucket

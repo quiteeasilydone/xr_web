@@ -24,11 +24,11 @@ class Instruction {
     this.instruction = instruction;
     this.instruction_type = instructionType;
 
-    console.log(options);
-    console.log(answer);
+    // console.log(options);
+    // console.log(answer);
 
     if (options == null) {
-      console.log("options가 null이에요");
+      //console.log("options가 null이에요");
       this.options = [];
     } else {
       this.options = options;
@@ -91,11 +91,11 @@ function addTopic() {
   topicNameInput.classList.add("topicInput"); // 클래스 추가
 
   // "Add Instruction" 버튼 텍스트 설정
-  addInstructionBtn.textContent = "항목 추가";
+  addInstructionBtn.textContent = "질문 추가";
   addInstructionBtn.classList.add("addInstructionBtn"); // 클래스 추가
 
   // Instruction 토글 버튼 텍스트 및 속성 설정
-  toggleInstructionsBtn.textContent = "내용 숨기기/보이기";
+  toggleInstructionsBtn.textContent = "질문 숨기기/보이기";
   toggleInstructionsBtn.classList.add("toggleInstructionBtn"); // 클래스 추가
 
   //임시 삭제 버튼
@@ -210,17 +210,17 @@ function addInstruction(instructionContainer) {
   // instructionType 선택 셀렉트 태그 옵션 설정
   const optionValues = [
     "check",
-    "multiple_choice",
     "single_choice",
+    "multiple_choice",
     "multiple_select",
     "numeric_input",
   ];
   const optionTexts = [
-    "Check",
-    "Multiple Choice",
-    "Single Choice",
-    "Multiple Select",
-    "Numeric Input",
+    "체크",
+    "예/아니오 선택",
+    "단일 선택",
+    "복수 선택",
+    "수치 입력",
   ];
 
   for (let i = 0; i < optionValues.length; i++) {
@@ -254,12 +254,19 @@ function toggleOptions(optionContainer) {
 }
 
 function addOption(optionsContainer) {
+  optionsLength = optionsContainer.querySelectorAll(".option").length;
+  if (optionsLength >= 5) {
+    alert("선택지는 최대 5개까지 추가할 수 있습니다!");
+    return;
+  }
+
   const optionElement = document.createElement("div");
   optionElement.classList.add("option");
 
   const optionInput = document.createElement("input");
   optionInput.setAttribute("type", "text");
   optionInput.setAttribute("placeholder", "Option");
+  optionInput.setAttribute("maxlength", "5"); // 10자 제한 속성 추가
 
   const deleteBtn = document.createElement("button");
   deleteBtn.textContent = "Delete";
@@ -276,23 +283,29 @@ function addOption(optionsContainer) {
 }
 
 // 옵션들을 가져오는 함수
-function getOptions(instructionElement, instructionType) {
+function getOptions(_instruction, instructionType) {
+  console.log(`get Options : ${instructionType}`);
+  console.log(_instruction);
   let options = [];
-  console.log(instructionType);
 
   switch (instructionType) {
     case "check":
       return null;
-    case "singleChoice":
+    case "single_choice":
       options = ["예", "아니오"];
       break;
-    case "numericInput":
+    case "numeric_input":
       return null;
-    case "multipleChoice":
-    case "multipleSelect":
-      const optionList = instructionElement.querySelectorAll(
+    case "multiple_choice":
+    case "multiple_select":
+      const optionContainer = _instruction.querySelector(".optionsContainer");
+      console.log(optionContainer);
+
+      const optionList = _instruction.querySelectorAll(
         ".optionsContainer > div"
       );
+
+      console.log(optionList);
 
       optionList.forEach(function (optionElement) {
         let value = optionElement.querySelector("input[type='text']").value;
@@ -305,12 +318,25 @@ function getOptions(instructionElement, instructionType) {
 }
 
 function saveReportForm() {
-  if (jsonData == null) {
-    console.log("새로 생성");
-    generateJson();
-  }
+  if (checkEmptyInputs()) return;
+  generateJson();
+}
 
-  sendRequest(jsonData);
+function checkEmptyInputs() {
+  const inputs = document.querySelectorAll("input");
+  let isEmpty = false;
+
+  inputs.forEach(function (input) {
+    if (input.value.trim() === "") {
+      isEmpty = true;
+    }
+  });
+
+  if (isEmpty) {
+    alert("빈 입력 필드가 있습니다. 모두 채워주세요");
+    return true;
+  }
+  return false;
 }
 
 // JSON을 생성하고 화면에 표시하는 함수
@@ -323,10 +349,11 @@ function generateJson() {
   topicElements.forEach(function (topicElement) {
     const topicName = topicElement.querySelector("input[type='text']").value; // 토픽 이름 가져오기
     const instructionList = []; // 각 토픽의 지시사항 목록을 담을 배열 초기화
-    const instructionElement = topicElement.querySelector(
-      ".instructionContainer"
-    );
-    const instructionElements = topicElement.querySelectorAll(
+    const instructionElements = topicElement.querySelectorAll(".instruction");
+
+    console.log(instructionElements);
+
+    const instructionInputs = topicElement.querySelectorAll(
       "div .instructionInput"
     ); // 각 토픽의 지시사항 입력 요소들 가져오기
     const instructionTypeElements = topicElement.querySelectorAll(
@@ -335,13 +362,20 @@ function generateJson() {
 
     // 각 지시사항 입력 요소와 instructionType 선택 요소를 순회하며 정보를 가져와서 Instruction 객체를 만들고 instructionList에 추가
     for (let i = 0; i < instructionElements.length; i++) {
-      const instructionValue = instructionElements[i].value;
-      const instructionType = instructionTypeElements[i].value; // 선택한 instructionType 가져오기
+      let instruction = instructionElements[i];
+      let inputValue = instruction.querySelector(".instructionInput");
+      const instructionValue = inputValue.value;
+
+      let inputText = instruction.querySelector(".instructionTypeSelect");
+      const instructionType = inputText.value;
+
+      //const instructionType = instructionTypeElements[i].value; // 선택한 instructionType 가져오기
+      console.log(instructionValue, instructionType);
 
       const instructionObject = new Instruction(
         instructionValue,
         instructionType,
-        getOptions(instructionElement, instructionType),
+        getOptions(instruction, instructionType),
         null
       ); // Instruction 객체 생성
       instructionList.push(instructionObject); // instructionList에 추가
@@ -356,15 +390,17 @@ function generateJson() {
   //const jsonOutputElement = document.getElementById("jsonOutput");
   jsonString = jsonData.toJsonString();
   //jsonOutputElement.textContent = jsonString; // 들여쓰기 2로 설정하여 가독성 향상
-  console.log(jsonString);
-  sendRequest(jsonString);
+  //console.log(jsonString);
+  sendRequest(jsonData);
 }
 
 function sendRequest(jsonData) {
   // HTTP POST 요청을 보낼 URL
   const url = "https://" + window.location.hostname + "/api/reports";
+  jsonString = jsonData.toJsonString();
+  console.log(jsonString);
 
-  // // HTTP 요청 옵션 설정
+  // HTTP 요청 옵션 설정
   const requestOptions = {
     method: "POST",
     headers: {
@@ -383,35 +419,15 @@ function sendRequest(jsonData) {
     })
     .then((data) => {
       console.log("Response:", data);
+      alert("절차 생성 완료!");
       // 여기서 응답에 대한 작업을 수행합니다.
     })
     .catch((error) => {
+      alert(`절차 생성 실패. 사유:${error}`);
       console.error("There was a problem with the request:", error);
       // 여기서 오류 처리를 수행합니다.
     });
 }
-
-// function sendGetRequest() {
-//   // GET 요청을 보낼 URL
-//   const url = ";
-
-//   // Fetch API를 사용하여 HTTP GET 요청 보내기
-//   fetch(url)
-//     .then((response) => {
-//       if (!response.ok) {
-//         throw new Error("Network response was not ok");
-//       }
-//       return response.json();
-//     })
-//     .then((data) => {
-//       console.log("Response:", data);
-//       // 여기서 응답에 대한 작업을 수행합니다.
-//     })
-//     .catch((error) => {
-//       console.error("There was a problem with the request:", error);
-//       // 여기서 오류 처리를 수행합니다.
-//     });
-// }
 
 function addOptionsToInfraOption(optionsArray) {
   // Get the select element by its ID

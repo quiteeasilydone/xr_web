@@ -52,7 +52,8 @@ CREATE TABLE posted_reports(
     report_form_id INT NOT NULL,
     start_time BIGINT, -- 유닉스 타임스탬프로 작성 시작 시간 
     end_time BIGINT, -- 유닉스 타임스탬프로 작성 완료 시간
-    company_name VARCHAR(255) NOT NULL, -- 작성자의 이름 또는 아이디(아이디를 만드는 것이 좋을것 같음)
+    company_name VARCHAR(255) NOT NULL, -- 회사 이름
+    user_name VARCHAR(255) NOT NULL, -- 안드로이드 기기에서 작성자의 이름 또는 아이디(아이디를 만드는 것이 좋을것 같음)
     FOREIGN KEY (report_form_id) REFERENCES report_forms(report_form_id) ON DELETE CASCADE,
     FOREIGN KEY (company_name) REFERENCES users(company_name) ON DELETE CASCADE
 );

@@ -1,9 +1,10 @@
 let reportContent;
+let infra;
 
 document.addEventListener("DOMContentLoaded", function () {
   // URL에서 파라미터 값 가져오기
   const urlParams = new URLSearchParams(window.location.search);
-  const infra = urlParams.get("infra");
+  infra = urlParams.get("infra");
   const id = urlParams.get("id");
   console.log(`id : ${id}`);
 
@@ -20,7 +21,10 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 function getPostedReport(id) {
-  const apiUrl = `/api/posted-report?posted_report_id=${id}`;
+  console.log("get post");
+  const apiUrl = `/api/posted-reports-detail?infra=${infra}&company_name=${getCookie(
+    "company"
+  )}&posted_report_id=${id}`;
 
   fetch(apiUrl)
     .then((response) => {

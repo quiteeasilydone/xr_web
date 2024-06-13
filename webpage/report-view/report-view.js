@@ -37,7 +37,10 @@ function redirectToReportDetail(infra, posted_report_id) {
   console.log("보고서 상세보기로 이동");
   //window.location.href = `/report-detail?infra=${infra}&date=${date}`;
   //window.location.href = reportPath;
-  window.location.href = `/report-detail?infra=${infra}&id=${posted_report_id}`;
+
+  window.location.href = `/report-detail?infra=${infra}&company_name=${getCookie(
+    "company"
+  )}&id=${posted_report_id}`;
 }
 
 function sendGetRequest(url, callback) {

@@ -34,6 +34,7 @@ class InspectedReport(BaseModel):
     end_time: str
     company_name: str
     infra: str
+    user_name: str # 안드로이드 기기에서 보낸 작성자 이름
     inspection_list: List[InspectionForm]
 
 # 설비에 대한 가장 최근의 보고서 요청 모델 스키마
