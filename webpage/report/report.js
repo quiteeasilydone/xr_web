@@ -1,4 +1,4 @@
-const companyName = getCookie('company');
+const companyName = getCookie("company");
 
 class Inspection {
   constructor(topic, instructionList, imageRequired) {
@@ -53,9 +53,14 @@ class Instruction {
 
 class JsonData {
   constructor(infra, inspectionList) {
-    this.user_name = "dummy";
+    this.company_name = getCookie("company");
     this.infra = infra;
+    this.last_modified_time = this.currentUnixTime();
     this.inspection_list = inspectionList;
+  }
+
+  currentUnixTime() {
+    return Math.floor(Date.now() / 1000).toString();
   }
 
   toJsonString() {
@@ -82,6 +87,7 @@ function addTopic() {
   // 토픽 이름 입력 필드 속성 설정
   topicNameInput.setAttribute("type", "text");
   topicNameInput.setAttribute("placeholder", "토픽 입력");
+  topicNameInput.setAttribute("maxlength", "10"); // 10자 제한 속성 추가
   topicNameInput.classList.add("topicInput"); // 클래스 추가
 
   // "Add Instruction" 버튼 텍스트 설정
@@ -174,6 +180,7 @@ function addInstruction(instructionContainer) {
   instructionInput.setAttribute("type", "text");
   instructionInput.setAttribute("placeholder", "Instruction");
   instructionInput.classList.add("instructionInput");
+  instructionInput.setAttribute("maxlength", "25"); // 10자 제한 속성 추가
 
   instructionTypeSelect.classList.add("instructionTypeSelect");
 
@@ -346,9 +353,9 @@ function generateJson() {
 
   jsonData = new JsonData(infraName, inspectionList);
 
-  const jsonOutputElement = document.getElementById("jsonOutput");
+  //const jsonOutputElement = document.getElementById("jsonOutput");
   jsonString = jsonData.toJsonString();
-  jsonOutputElement.textContent = jsonString; // 들여쓰기 2로 설정하여 가독성 향상
+  //jsonOutputElement.textContent = jsonString; // 들여쓰기 2로 설정하여 가독성 향상
   console.log(jsonString);
   sendRequest(jsonString);
 }
@@ -437,7 +444,7 @@ function fetchInfraList() {
 
 // HTML 문서가 로드되면 실행됨
 document.addEventListener("DOMContentLoaded", function () {
-  console.log("abc");
+  console.log(getCookie("company"));
   container = document.getElementById("report-container");
   console.log(container);
   const addTopicBtn = document.getElementById("addTopicBtn");

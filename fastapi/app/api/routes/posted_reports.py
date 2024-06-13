@@ -217,7 +217,7 @@ async def submit_inspected_report(request: Request, data: request_body.Inspected
         ''')
 
         # 무결성 보장: MinIO 경로 생성
-        posted_report_path = "/" + str(os.environ['MINIO_BUCKET']) + "/" + str(last_posted_report_id)
+        posted_report_path = "/" + str(os.environ['MINIO_BUCKET']) + "/" + str(last_posted_report_id+1)
 
         # Insert data into posted_reports table
         posted_report_id = await conn.fetchval('''

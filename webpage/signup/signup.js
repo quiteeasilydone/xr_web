@@ -41,3 +41,17 @@ function setAuthCookies(company_name, company_num) {
   setCookie("employee_number", company_num, 1); // 1시간 유효한 쿠키
   redirectToMenu();
 }
+
+function setCookie(name, value, hours) {
+  let expires = "";
+  if (hours) {
+    const date = new Date();
+    date.setTime(date.getTime() + hours * 60 * 60 * 1000);
+    expires = "; expires=" + date.toUTCString();
+  }
+  document.cookie = `${name}=${value || ""}${expires}; path=/`;
+}
+
+function redirectToMenu() {
+  window.location.href = "/report";
+}

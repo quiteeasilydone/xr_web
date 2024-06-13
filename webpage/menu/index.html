@@ -35,11 +35,15 @@
         기기 등록
       </button>
       <button class="menu-button" onclick="redirectToRegisterInfra()">
-        설비 등록
+        설비 조회 및 등록
       </button>
     </div>
 
     <script>
+      function redirectToMenu() {
+        window.location.href = "/report";
+      }
+
       function redirectToProcedure() {
         window.location.href = "/report";
       }

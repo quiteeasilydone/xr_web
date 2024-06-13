@@ -21,30 +21,30 @@ import base64 # QR 코드를 인코딩하기 위한 라이브러리
 router = APIRouter()
 
 
-# # 더미 사용자 생성
-# @router.post("/api/user")
-# async def make_dummy_company(request: Request):
+# 더미 사용자 생성
+@router.post("/api/user")
+async def make_dummy_company(request: Request):
 
-#     # 임시 company_name 0000
-#     company_name = "dummy"
-#     email = "dummy_company12@gmail.com"
-#     employee_identification_number = 8888
+    # 임시 company_name 0000
+    company_name = "HCI_LAB"
+    email = "HCI_LAB@gmail.com"
+    employee_identification_number = 123
 
-#     conn = await postgres_connection.connect_db()
+    conn = await postgres_connection.connect_db()
 
-#     try:
-#         await conn.fetch('''
-#             INSERT INTO users ("company_name", "email", "employee_identification_number")
-#             VALUES ($1, $2, $3)
-#         ''', company_name, email, employee_identification_number
-#         )
+    try:
+        await conn.fetch('''
+            INSERT INTO users ("company_name", "email", "employee_identification_number")
+            VALUES ($1, $2, $3)
+        ''', company_name, email, employee_identification_number
+        )
         
-#         await conn.close()
-#         return JSONResponse(content={"message": "Data saved successfully"}, status_code=200)
+        await conn.close()
+        return JSONResponse(content={"message": "Data saved successfully"}, status_code=200)
         
-#     except Exception as e:
-#         await conn.close()
-#         raise HTTPException(status_code=500, detail=f"Error saving data: {str(e)}")
+    except Exception as e:
+        await conn.close()
+        raise HTTPException(status_code=500, detail=f"Error saving data: {str(e)}")
 
 # DB에 있는 모든 유저 정보 돌려주기
 @router.post("/api/users", response_model=List[response_user])

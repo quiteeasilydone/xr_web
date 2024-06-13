@@ -1,13 +1,6 @@
-const companyName = getCookie('company')
+const companyName = getCookie("company");
 
-// document.addEventListener("DOMContentLoaded", function () {
-//
-
-//   function redirectToReport(infra) {
-//     window.location.href = `/report-view?infra=${infra}`;
-//   }
 document.addEventListener("DOMContentLoaded", function () {
-  console.log("heyhey");
   const infraList = document.getElementById("infra-list");
 
   let infraArray; // infraArray 변수 선언

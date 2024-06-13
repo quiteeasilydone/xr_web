@@ -17,16 +17,21 @@
         display: block;
       }
     </style>
-    <script src="../user-info.js"></script>
     <script src="../auth/cookie.js"></script>
+    <script src="register-infra.js"></script>
   </head>
   <body>
     <div id="container">
       <h2>설비 등록</h2>
-      <input type="text" id="infraName">
-      <button id="infraRegisterBtn" onclick="sendRegisterRequest()">등록</button>
+      <input type="text" id="infraName" />
+      <button id="infraRegisterBtn" onclick="sendRegisterRequest()">
+        등록/QR 조회
+      </button>
+      <h2>기존 설비 목록</h2>
+      <div id="infra-list">
+        <!-- JavaScript를 사용하여 동적으로 설비 버튼을 생성 -->
+      </div>
     </div>
-    <div id="infraQr"></div>
     <script>
       // 쿠키 값을 읽는 함수
       function getCookie(name) {
@@ -49,6 +54,5 @@
         }
       });
     </script>
-    <script src="register-infra.js"></script>
   </body>
 </html>

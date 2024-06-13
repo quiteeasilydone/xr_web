@@ -60,14 +60,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (company) {
     document.getElementById("user-email").textContent = `회사: ${company}`;
+    document.getElementById("user-name").textContent = `회사 번호: ${number}`;
   } else {
     console.log("쿠키가 없네요");
     window.location.href = "/login";
   }
 
-  if (number) {
-    document.getElementById("user-name").textContent = `회사 번호: ${number}`;
-  } else {
-    window.location.href = "/login";
-  }
+  // if (number) {
+  //   document.getElementById("user-name").textContent = `회사 번호: ${number}`;
+  // } else {
+  //   window.location.href = "/login";
+  // }
 });
