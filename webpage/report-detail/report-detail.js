@@ -46,7 +46,7 @@ function getPostedReport(id) {
             }))
         }))
     };
-      reportContent.textContent = JSON.stringify(extractedData, null, "\t"); // 객체를 문자열로 변환하여 표시
+      reportContent.textContent = JSON.stringify(extractedData, null, 2); // 객체를 문자열로 변환하여 표시
       // 필요에 따라 데이터를 처리하는 로직 추가
     })
     .catch((error) => {
