@@ -12,4 +12,4 @@
 - **popperjs**: MIT License
 - **Bootstrap**: MIT License
 - **Bootbox**: MIT License
--**Toaster-JS**: MIT License
+- **Toaster-JS**: MIT License
