@@ -20,6 +20,8 @@ import qrcode # QR 코드를 생성하기 위한 라이브러리
 import io # QR 코드를 메모리에 저장하기 위한 라이브러리
 import base64 # QR 코드를 인코딩하기 위한 라이브러리
 
+import os
+
 router = APIRouter()
 
 
@@ -175,7 +177,7 @@ async def get_wearable_machine_check(android_UUID : str):
         raise HTTPException(status_code=500, detail=f"Error occur: {str(e)}")
 
 async def get_janus():
-    base_url = "wss://rtctest.p-e.kr/janus-ws"
+    base_url = os.environ['JANUS_ENDPOINT']
     session = JanusSession(base_url=base_url)
     plugin_handle = JanusVideoRoomPlugin()
     await plugin_handle.attach(session=session)

@@ -1,4 +1,5 @@
 services:
+# 프록시 서버 설정
   proxy:
     depends_on:
       - nginx
@@ -12,9 +13,10 @@ services:
       - "443:443"
     volumes:
       - ./proxyserver/nginx.conf:/etc/nginx/nginx.conf
-      - ../jsy/certbot:/etc/letsencrypt
+      - ./certbot:/etc/letsencrypt
       - ./webpage/index.html:/usr/share/nginx/html/index.html
 
+# 프론트엔드 서버 설정
   nginx:
     image: nginx:latest
     container_name: webpage
@@ -22,6 +24,7 @@ services:
     volumes:
       - ./webpage:/usr/share/nginx/html
 
+# 백엔드 서버 설정
   fastapi:
     build:
       context: ./fastapi
@@ -30,17 +33,18 @@ services:
     container_name: api
     command: uvicorn main:app --host 0.0.0.0 --port 80
     environment:
-      DATABASE_URL: postgresql://fastapiuser:fastapipassword@db/fastapidb
-      MINIO_ENDPOINT: xr-s3.atgdevs.com:443
-      MINIO_ACCESS_KEY: minio
-      MINIO_SECRET_KEY: inha_storage
-      MINIO_BUCKET: inspected-reports
-      XR_WEB_SERVER_GOOGLE_CLIENT_ID: 344730349691-8kddgtg8uh8ijrl86dneb2aguanl7tou.apps.googleusercontent.com
-      XR_WEB_SERVER_GOOGLE_CLIENT_SECRET: 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
-      XR_WEB_SERVER_GOOGLE_REDIRECT_URI: https://rtctest.p-e.kr/auth
+      DATABASE_URL: {postgresql://[user]:[password]@db/[db name]}
+      MINIO_ENDPOINT: {minio endpoint}
+      MINIO_ACCESS_KEY: {minio access key}
+      MINIO_SECRET_KEY: {minio secret key}
+      MINIO_BUCKET: {minio bucket name}
+      XR_WEB_SERVER_GOOGLE_CLIENT_ID: {Google SSO admin ID}
+      XR_WEB_SERVER_GOOGLE_CLIENT_SECRET: {Google SSO admin password}
+      XR_WEB_SERVER_GOOGLE_REDIRECT_URI: {Login redirection page (domain/auth)}
     depends_on:
       - db
 
+# db 설정
   db:
     image: postgres:latest
     container_name: postgresdb
@@ -50,10 +54,11 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_DB: "fastapidb"
-      POSTGRES_USER: "fastapiuser"
-      POSTGRES_PASSWORD: "fastapipassword"
-  
+      POSTGRES_DB: {db name}
+      POSTGRES_USER: {db user}
+      POSTGRES_PASSWORD: {db password}
+
+# db 관리도구(Optional)
   pgadmin:
     container_name: pgadmin
     image: dpage/pgadmin4
@@ -63,21 +68,19 @@ services:
     # volumes:
     #   - ./pgadmin:/var/lib/pgadmin
     environment:
-      - PGADMIN_DEFAULT_EMAIL=example@pgadmin.com
-      - PGADMIN_DEFAULT_PASSWORD=pgadmin
+      - PGADMIN_DEFAULT_EMAIL={pgadmin ID}
+      - PGADMIN_DEFAULT_PASSWORD={pgadmin password}
       - TZ=Asia/Seoul
     depends_on:
       - db
 
+# 시그널링 서버
   janus:
       build:
         context: ./janus
         dockerfile: Dockerfile
       restart: always
       container_name: janus
-      volumes:
-        - ../jsy/certbot:/etc/letsencrypt
-        # - ./janus/log/janus.log:/var/log/janus.log
       ports:
         - 7088:7088
         - 8088:8088
@@ -85,6 +88,7 @@ services:
         - 8989:8989
         - 10000-10030:10000-10030/udp
 
+# SSL 관리 컨테이너
   certbot:
     depends_on:
       - proxy 
@@ -93,8 +97,9 @@ services:
     volumes:
       - ../jsy/certbot:/etc/letsencrypt
       - ./webpage/index.html:/usr/share/nginx/html/index.html
-    command: certonly --webroot --webroot-path=/usr/share/nginx/html --email test@test.com --agree-tos --no-eff-email --keep-until-expiring -d rtctest.p-e.kr
+    command: certonly --webroot --webroot-path=/usr/share/nginx/html --email {your email} --agree-tos --no-eff-email --keep-until-expiring -d {your domain}
 
+# 사설 TURN 서버
   coturn:
     image: coturn/coturn:4.5.2
     container_name: coturnserver

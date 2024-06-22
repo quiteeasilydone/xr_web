@@ -85,4 +85,4 @@ server = "wss://" + window.location.hostname+ "/janus-ws";
 // janus.js will fallback to the Google STUN server by default:
 //
 var iceServers = null;
-iceServers = [{urls: "stun:stun.l.google.com:19302"}, {urls: "stun:stun1.l.google.com:19302"}, {urls: "stun:stun.ivao.aero:3478"}, {urls: "turn:165.246.44.125:3478", username: "test", credential: "test123"}]
+iceServers = [{urls: "turn:{your ip}:3478", username: {your turn id}, credential: {your turn password}}, {optional stun servers}, ...]
