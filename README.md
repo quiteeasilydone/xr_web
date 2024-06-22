@@ -3,6 +3,7 @@
 
 **최초 1회 Google SSO와 Nginx - Certbot SSL 적용이 필요합니다**
 - 구글 SSO 설정 : https://support.google.com/a/answer/12032922?hl=ko
+- certbot 폴더 생성(인증서 관리용)
 - Nginx SSL 설정(현 프로젝트는 webroot 방식 채택) : https://wonsss.github.io/deploy/https-webroot/
 
 **위 설정 이후 아래 과정을 따라 서비스를 배포할 수 있습니다**
