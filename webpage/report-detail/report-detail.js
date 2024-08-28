@@ -152,8 +152,19 @@ class ReportView {
     this.topic_count = this.inspection_list.length;
   }
 
-  currentUnixTime() {
-    return Math.floor(Date.now() / 1000).toString();
+  formatTimestamp(unixTimestamp) {
+    // Unix Timestamp를 밀리초 단위로 변환하여 Date 객체 생성
+    const date = new Date(unixTimestamp * 1000);
+
+    // 원하는 형식으로 날짜와 시간을 반환 (예: YYYY-MM-DD HH:MM:SS)
+    const year = date.getFullYear();
+    const month = ("0" + (date.getMonth() + 1)).slice(-2); // 월은 0부터 시작하므로 +1
+    const day = ("0" + date.getDate()).slice(-2);
+    const hours = ("0" + date.getHours()).slice(-2);
+    const minutes = ("0" + date.getMinutes()).slice(-2);
+    const seconds = ("0" + date.getSeconds()).slice(-2);
+
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
   }
 
   toJsonString() {
@@ -173,7 +184,7 @@ class ReportView {
     const reportHeader = document.getElementById("report-header");
     reportHeader.textContent = `
     설비명 : ${this.infra}
-    보고서 작성 시작시간 : ${this.start_time}
+    보고서 작성 시작시간 : ${this.formatTimestamp(this.start_time)}
     보고서 작성 완료시간 : ${this.end_time}
     `;
 
@@ -216,7 +227,6 @@ class ReportView {
   }
 
   generateInstruction(instruction) {
-    console.log(instruction);
     // instruction div 생성
     const instructionDiv = document.createElement("div");
     instructionDiv.className = "instruction";
