@@ -11,7 +11,6 @@ document.addEventListener("DOMContentLoaded", function () {
   // 보고서 제목 설정
   const reportTitle = `${infra} 점검 보고서 (${id})`;
   const reportTitleElement = document.getElementById("report-title");
-  reportContent = document.getElementById("report-content");
   reportTitleElement.textContent = reportTitle;
 
   // report 정보 불러오기
@@ -53,7 +52,6 @@ function getPostedReport(id) {
       console.log(reportView);
       console.log(reportView.toJsonString());
       reportView.generateReportContainer();
-      reportContent.textContent = reportView.toJsonString(); // toJsonString()을 사용하여 JSON 문자열로 변환
       // 필요에 따라 데이터를 처리하는 로직 추가
     })
     .catch((error) => {
@@ -185,7 +183,7 @@ class ReportView {
     reportHeader.textContent = `
     설비명 : ${this.infra}
     보고서 작성 시작시간 : ${this.formatTimestamp(this.start_time)}
-    보고서 작성 완료시간 : ${this.end_time}
+    보고서 작성 완료시간 : ${this.formatTimestamp(this.start_time)}
     `;
 
     this.inspection_list.forEach((inspection) => {
@@ -209,6 +207,7 @@ class ReportView {
 
       toggleInstructionsBtn.textContent = "질문 숨기기/보이기";
       toggleInstructionsBtn.classList.add("addInstructionBtn"); // 클래스 추가
+
       topicDiv.appendChild(toggleInstructionsBtn); // 토글 버튼 추가
 
       // 질문 컨테이너 생성
@@ -223,6 +222,11 @@ class ReportView {
 
       // reportContainer에 topicDiv 추가
       reportContainer.appendChild(topicDiv);
+
+      // "Toggle Instructions" 버튼 클릭 시 실행될 함수
+      toggleInstructionsBtn.addEventListener("click", function () {
+        toggleInstructions(instructionContainer);
+      });
     });
   }
 
@@ -252,5 +256,15 @@ class ReportView {
     instructionDiv.appendChild(answer);
 
     return instructionDiv;
+  }
+}
+
+// 지시사항 숨기기/보이기 토글 함수
+function toggleInstructions(instructionContainer) {
+  // instructionContainer의 display 속성을 토글하여 숨기거나 보여줌
+  if (instructionContainer.style.display === "none") {
+    instructionContainer.style.display = "block";
+  } else {
+    instructionContainer.style.display = "none";
   }
 }
