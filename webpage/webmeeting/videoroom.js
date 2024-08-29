@@ -195,20 +195,41 @@ $(document).ready(function () {
                           });
                         document.querySelectorAll("video")[0].srcObject =
                           screenStream;
+
                         //screenVideo.srcObject = screenStream;
                       } catch (err) {
                         console.error("Error: " + err);
+                      }
+
+                      if (sfutest) {
+                        // 기존 스트림을 중지하고 새로운 스트림을 발행합니다.
+                        sfutest.send({
+                          message: { request: "configure", video: false }, // 기존 비디오를 중지
+                        });
+
+                        // 새 화면 공유 스트림을 Janus 서버에 발행합니다.
+                        sfutest.send({
+                          message: { request: "publish", video: true },
+                          jsep: {
+                            type: "offer",
+                            sdp: await createOfferForStream(screenStream), // 새 스트림을 위한 SDP 제안 생성
+                          },
+                        });
                       }
                     }
                     startCapture();
                   } else {
                     Janus.log(`웹캠 변경 : ${id}`);
-                  }
 
-                  // 미디어 소스 변경
-                  sfutest.send({
-                    message: { request: "configure", video: false },
-                  });
+                    // 미디어 소스 변경
+                    sfutest.send({
+                      message: {
+                        request: "configure",
+                        audio: true, // 또는 false, 필요에 따라 설정
+                        video: true, // 또는 false, 필요에 따라 설정
+                      },
+                    });
+                  }
                 });
               },
               slowLink: function (uplink, lost, mid) {
@@ -277,8 +298,10 @@ $(document).ready(function () {
                       window.location.reload();
                     });
                   } else if (event === "event") {
+                    // 이벤트를 수신했을 경우
                     // Any info on our streams or a new feed to attach to?
                     console.log(event);
+                    Janus.log("Received message:", msg);
                     if (msg["streams"]) {
                       let streams = msg["streams"];
                       for (let i in streams) {
