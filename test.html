@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>화면 공유 테스트</title>
+  </head>
+  <body>
+    <h1>화면 공유 테스트</h1>
+    <button id="startCapture">화면 공유 시작</button>
+    <button id="stopCapture" disabled>화면 공유 중지</button>
+    <video id="screenVideo" autoplay playsinline></video>
+
+    <script>
+      const startCaptureButton = document.getElementById("startCapture");
+      const stopCaptureButton = document.getElementById("stopCapture");
+      const screenVideo = document.getElementById("screenVideo");
+      let screenStream = null;
+
+      // 화면 공유 시작 함수
+      async function startCapture() {
+        try {
+          screenStream = await navigator.mediaDevices.getDisplayMedia({
+            video: true,
+          });
+          screenVideo.srcObject = screenStream;
+          startCaptureButton.disabled = true;
+          stopCaptureButton.disabled = false;
+        } catch (err) {
+          console.error("Error: " + err);
+        }
+      }
+
+      // 화면 공유 중지 함수
+      function stopCapture() {
+        let tracks = screenStream.getTracks();
+        tracks.forEach((track) => track.stop());
+        screenVideo.srcObject = null;
+        startCaptureButton.disabled = false;
+        stopCaptureButton.disabled = true;
+      }
+
+      // 버튼 이벤트 리스너
+      startCaptureButton.addEventListener("click", startCapture);
+      stopCaptureButton.addEventListener("click", stopCapture);
+    </script>
+  </body>
+</html>
