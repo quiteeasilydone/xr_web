@@ -11,3 +11,5 @@ starlette
 jose
 qrcode[pil]
 janus-client
+greenlet>=1.0.0 
+sqlalchemy

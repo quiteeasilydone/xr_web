@@ -11,7 +11,7 @@ from schemas.request_body import Company
 from schemas.request_body import Infra
 
 from typing import List
-from db import postgres_connection
+# from db import postgres_connection
 
 from janus_client import JanusSession, JanusVideoRoomPlugin
 
@@ -22,52 +22,49 @@ import base64 # QR 코드를 인코딩하기 위한 라이브러리
 
 import os
 
+# 추가
+from sqlalchemy.ext.asyncio import AsyncSession
+from db.postgres_connection import connect_db
+from sqlalchemy import func
+from sqlalchemy.future import select
+from schemas.models import User as UserModel
+from sqlalchemy import update,func
+
 router = APIRouter()
 
 
 # 더미 사용자 생성
 @router.post("/api/user")
-async def make_dummy_company(request: Request):
-
-    # 임시 company_name 0000
+async def make_dummy_company(db: AsyncSession = Depends(connect_db)):
     company_name = "HCI_LAB"
     email = "HCI_LAB@gmail.com"
     employee_identification_number = 123
 
-    conn = await postgres_connection.connect_db()
+    new_user = UserModel(
+        company_name=company_name,
+        email=email,
+        employee_identification_number=employee_identification_number
+    )
 
     try:
-        await conn.fetch('''
-            INSERT INTO users ("company_name", "email", "employee_identification_number")
-            VALUES ($1, $2, $3)
-        ''', company_name, email, employee_identification_number
-        )
-        
-        await conn.close()
+        db.add(new_user)
+        await db.commit()
+        await db.refresh(new_user)
         return JSONResponse(content={"message": "Data saved successfully"}, status_code=200)
-        
     except Exception as e:
-        await conn.close()
+        await db.rollback()
         raise HTTPException(status_code=500, detail=f"Error saving data: {str(e)}")
 
 # DB에 있는 모든 유저 정보 돌려주기
 @router.post("/api/users", response_model=List[response_user])
-async def login(request: Request):
-    conn = await postgres_connection.connect_db()
-
+async def get_all_users(db: AsyncSession = Depends(connect_db)):
     try:
-        # 모든 유저 정보 조회
-        users = await conn.fetch("SELECT user_id, employee_identification_number, company_name, email FROM users")
-        await conn.close()
-
-        # 조회된 유저 정보를 리스트로 변환
-        user_list = [response_user(**user) for user in users]
-
-        return user_list
+        result = await db.execute(select(UserModel))
+        users = result.scalars().all()
+        return users
     except Exception as e:
-
-        await conn.close()
         raise HTTPException(status_code=500, detail=f"Error fetching users: {str(e)}")
+
 
 
 # qr code 생성 함수
@@ -88,9 +85,9 @@ def generate_qr_code(data: str) -> io.BytesIO:
     return buf
 
 
-# 웹에서 호출하면 QR코드화면 호스팅
+# 웹에서 호출하면 QR코드 화면 호스팅
 @router.post("/api/wearable-qr-image")
-async def get_qr_image_for_registering(request: Request, body: request_user):
+async def get_qr_image_for_registering(body: request_user):
     company_name = body.company_name
     if not company_name:
         raise HTTPException(status_code=400, detail="company name is required")
@@ -98,16 +95,15 @@ async def get_qr_image_for_registering(request: Request, body: request_user):
     try:
         # Generate the QR code with the company name
         qr_data = {"company_name": company_name}
-        qr_image = generate_qr_code(qr_data)
+        qr_image = generate_qr_code(json.dumps(qr_data))  # QR 데이터는 문자열이어야 합니다.
 
         return StreamingResponse(qr_image, media_type="image/png")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generating QR code: {str(e)}")
 
-
 # (로그인 한 사용자가) infra를 입력하면 infra에 해당하는 보고서 양식을 가져갈 수 있도록 QR 이미지 호스팅
 @router.post("/api/infra-qr-image")
-async def get_qr_image_for_registrate_infra(request: Request, body: Infra):
+async def get_qr_image_for_registrate_infra(body: Infra):
     company_name = body.company_name
     infra = body.infra_name
 
@@ -117,64 +113,51 @@ async def get_qr_image_for_registrate_infra(request: Request, body: Infra):
         raise HTTPException(status_code=400, detail="Company name is missing in request body")
 
     try:
-        # Generate the QR code with the company name
+        # Generate the QR code with the company name and infra name
         qr_data = {"company_name": company_name, "infra_name": infra}
-        qr_image = generate_qr_code(qr_data)
+        qr_image = generate_qr_code(json.dumps(qr_data))
 
         return StreamingResponse(qr_image, media_type="image/png")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generating QR code: {str(e)}")
 
 
-# 회사가 가지고 있는 모든 안드로이드 기기의 list return
+# 회사가 가지고 있는 모든 안드로이드 기기의 list 반환
 @router.post("/api/wearable-machine-lists")
-async def get_wearable_machine_lists(request: Request, body: Company):
-    # wearable_identification INT[] 의 모든 요소를 return
-    conn = await postgres_connection.connect_db()
-
+async def get_wearable_machine_lists(body: Company, db: AsyncSession = Depends(connect_db)):
     try:
         # 회사 이름을 통해 wearable_identification 배열 검색
-        query = """
-        SELECT wearable_identification FROM users 
-        WHERE company_name = $1
-        """
-        result = await conn.fetchrow(query, body.company_name)
-        
-        if result is None:
+        query = select(UserModel.wearable_identification).where(UserModel.company_name == body.company_name)
+        result = await db.execute(query)
+        wearable_identification = result.scalar()
+
+        if not wearable_identification:
             raise HTTPException(status_code=404, detail="Company not found")
 
-        wearable_ids = result['wearable_identification']
-        
-        return {"wearable_identifications": wearable_ids}
-    
+        return {"wearable_identifications": wearable_identification}
+
     except Exception as e:
-        await conn.close()
+        raise HTTPException(status_code=500, detail=f"Error occurred: {str(e)}")
 
-        # 오류 발생 시 오류 메시지 반환
-        raise HTTPException(status_code=500, detail=f"Error occur: {str(e)}")
 
+# 특정 Android UUID가 존재하는지 확인
 @router.get("/api/wearable-machine-check/{android_UUID}")
-async def get_wearable_machine_check(android_UUID : str):
-    conn = await postgres_connection.connect_db()
-    
+async def get_wearable_machine_check(android_UUID: str, db: AsyncSession = Depends(connect_db)):
     try:
-        query = """
-        SELECT company_name
-        FROM users
-        WHERE $1 = ANY(wearable_identification);
-        """
-        
-        result = await conn.fetchrow(query, android_UUID)
-        
-        if result is None:
-            return {"result" : False, "company_name" : None}
+        query = select(UserModel.company_name).where(
+            func.array_contains(UserModel.wearable_identification, android_UUID)
+        )
+        result = await db.execute(query)
+        company_name = result.scalar()
+
+        if company_name is None:
+            return {"result": False, "company_name": None}
         else:
-            return {"result" : True, "company_name" : result["company_name"]}
-        
+            return {"result": True, "company_name": company_name}
+
     except Exception as e:
-        await conn.close()
-        
-        raise HTTPException(status_code=500, detail=f"Error occur: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error occurred: {str(e)}")
+
 
 async def get_janus():
     base_url = os.environ['JANUS_ENDPOINT']
@@ -189,37 +172,41 @@ async def get_janus():
 
 # TODO: 하나의 company_name에 중복된 UUID 입력시 예외처리
 @router.post("/api/registrate-machine-to-company")
-async def registrate_machine_to_company(wearable_identifier : WearableIdentifier, plugin_handle: JanusVideoRoomPlugin = Depends(get_janus)):
-    conn = await postgres_connection.connect_db()
-    
+async def registrate_machine_to_company(
+    wearable_identifier: WearableIdentifier, 
+    plugin_handle: JanusVideoRoomPlugin = Depends(get_janus),
+    db: AsyncSession = Depends(connect_db)
+):
     try:
         wearable_identification = wearable_identifier.wearable_identification
         company_name = wearable_identifier.company_name
-        
-        query = """
-        UPDATE users
-        SET wearable_identification = array_append(wearable_identification, $1)
-        WHERE company_name = $2;
-        """
-        
-        result = await conn.fetchrow(query, wearable_identification, company_name)
-        
+
+        # Update wearable_identification 배열에 새로운 ID 추가
+        stmt = (
+            update(UserModel)
+            .where(UserModel.company_name == company_name)
+            .values(wearable_identification= func.array_append(UserModel.wearable_identification, wearable_identification))
+        )
+        result = await db.execute(stmt)
+        await db.commit()
+
+        # Janus 방 생성
         room_config = {
-        "description": "My specific room",
-        "is_private": False,
-        "publishers": 6,
-        "bitrate": 128000,
-        "audiocodec": "opus",
-        "videocodec": "vp8"
-    }
-        
+            "description": f"Room for {company_name}",
+            "is_private": False,
+            "publishers": 6,
+            "bitrate": 128000,
+            "audiocodec": "opus",
+            "videocodec": "vp8"
+        }
+
         create_response = await plugin_handle.create_room(
             room_id=wearable_identification,
-            configuration = room_config
+            configuration=room_config
         )
-        
-        return {"result" : True}
+
+        return {"result": True, "create_response": create_response}
+
     except Exception as e:
-        await conn.close()
-        
-        raise HTTPException(status_code=500, detail=f"Error occur: {str(e)}")
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error occurred: {str(e)}")
