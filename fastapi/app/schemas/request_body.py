@@ -15,13 +15,14 @@ class LoginRequest(BaseModel):
 class InstructionForm(BaseModel):
     instruction: str
     instruction_type: str
+    img_url: str
     options: Optional[List[str]]
     answer: Optional[List[str]]
 
 class InspectionForm(BaseModel):
     topic: str
     instruction_list: List[InstructionForm]
-    image_required: bool
+    # image_required: bool
 
 class ReportForm(BaseModel):
     company_name: str
@@ -35,6 +36,7 @@ class InspectedReport(BaseModel):
     company_name: str
     infra: str
     user_name: str # 안드로이드 기기에서 보낸 작성자 이름
+    memo: str
     inspection_list: List[InspectionForm]
 
 # 설비에 대한 가장 최근의 보고서 요청 모델 스키마
@@ -64,3 +66,13 @@ class Infra(BaseModel):
 class WhiteboardRequest(BaseModel):
     filename: str
     file_content: str
+
+class MediaFileRequest(BaseModel):
+    report_form_id: int
+    topic_from_id: int
+    
+class UserLoactionRequest(BaseModel):
+    android_uuid: str
+    company_name: str
+    latitude: float
+    longitude: float

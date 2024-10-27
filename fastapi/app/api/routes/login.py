@@ -2,24 +2,17 @@ from fastapi import APIRouter
 from fastapi.security import OAuth2PasswordBearer
 from fastapi import FastAPI, Request, HTTPException, Depends
 from jose import jwt
-# from db import postgres_connection
 from starlette.status import HTTP_202_ACCEPTED, HTTP_401_UNAUTHORIZED
 from schemas import request_body
-
 import os
 import requests
-
-
-# 추가
 from schemas.models import User as UserModel
 from db.postgres_connection import connect_db
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import func
+
 router = APIRouter()
-
-
-
 
 ## 구글 SSO 연동
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -27,17 +20,16 @@ GOOGLE_CLIENT_ID = os.environ['XR_WEB_SERVER_GOOGLE_CLIENT_ID']
 GOOGLE_CLIENT_SECRET = os.environ['XR_WEB_SERVER_GOOGLE_CLIENT_SECRET']
 GOOGLE_REDIRECT_URI = os.environ['XR_WEB_SERVER_GOOGLE_REDIRECT_URI']
 
-# Initiating the Google login flow
-# redirect_uri 끝에 query param 으로 code가 붙는데, 이걸 /api/auth/google 에 같이 요청하면 로그인 한 사용자 정보를 돌려줌
-@router.get("/api/login/google")
+# 구글 로그인 플로우 시작
+@router.get("/api/login/google", summary="구글 로그인 시작", description="구글 로그인 플로우를 시작하기 위한 URL을 반환합니다.")
 async def login_google(request: Request):
     return {
         "url": f"https://accounts.google.com/o/oauth2/v2/auth/oauthchooseaccount?client_id={GOOGLE_CLIENT_ID}"
     f"&redirect_uri={GOOGLE_REDIRECT_URI}&response_type=code&scope=email%20profile&service=lso&o2v=2&ddm=0&flowName=GeneralOAuthFlow"
     }
 
-# Exchanging the authorization code for an access token
-@router.get("/api/auth/google")
+# 인증 코드를 액세스 토큰으로 교환
+@router.get("/api/auth/google", summary="구글 인증", description="구글로부터 받은 코드를 액세스 토큰으로 교환하고 사용자 정보를 반환합니다.")
 async def auth_google(code: str):
     token_url = "https://accounts.google.com/o/oauth2/token"
     data = {
@@ -52,47 +44,15 @@ async def auth_google(code: str):
     user_info = requests.get("https://www.googleapis.com/oauth2/v1/userinfo", headers={"Authorization": f"Bearer {access_token}"})
     return user_info.json()
 
-# Endpint to decode and verify the JWT token obtained after successful authentication
-@router.get("/api/token")
+# JWT 토큰 검증
+@router.get("/api/token", summary="JWT 토큰 검증", description="JWT 토큰을 디코딩하고 검증합니다.")
 async def get_token(token: str = Depends(oauth2_scheme)):
     return jwt.decode(token, GOOGLE_CLIENT_SECRET, algorithms=["HS256"])
 
-# # 회원가입
-# @router.post("/api/sign-up")
-# async def sign_up(request: request_body.SignUpRequest):
-#     conn = await postgres_connection.connect_db()
-#     # body에 email, company_name, employee_identification_number 담아옴
-#     # 이걸 DB user table에 저장
-#     # 이미 row 있으면 저장 안하고 http status code 202 돌려주면서 에러 메세지도 돌려줌
-#     # 202 - Accepted - 허용됨 - 요청은 접수하였지만, 처리가 완료되지 않았다. 응답 헤더의 Location, Retry-After를 참고하여 클라이언트는 다시 요청을 보냅니다.
-#     try:
-#         # 사용자 존재 여부 확인
-#         existing_user = await conn.fetchrow(
-#             "SELECT user_id FROM users WHERE email = $1 OR employee_identification_number = $2",
-#             request.email, request.employee_identification_number
-#         )
-#         if existing_user:
-#             await conn.close()
-#             raise HTTPException(
-#                 status_code=HTTP_202_ACCEPTED,
-#                 detail="User with this email or employee identification number already exists."
-#             )
-
-#         # 새로운 사용자 삽입
-#         await conn.execute(
-#             "INSERT INTO users (email, company_name, employee_identification_number) VALUES ($1, $2, $3)",
-#             request.email, request.company_name, request.employee_identification_number
-#         )
-#         await conn.close()
-
-#         return {"message": "User registered successfully"}
-#     except Exception as e:
-#         await conn.close()
-#         raise HTTPException(status_code=500, detail=f"Error registering user: {str(e)}")
-
 # 회원가입
-@router.post("/api/sign-up")
+@router.post("/api/sign-up", summary="회원가입", description="새로운 사용자를 등록합니다. 동일한 이메일이나 사원 번호가 있는 사용자는 등록되지 않습니다.")
 async def sign_up(request: request_body.SignUpRequest, db: AsyncSession = Depends(connect_db)):
+    print('call login method')
     try:
         existing_user = await db.execute(
             select(UserModel).where(
@@ -123,39 +83,8 @@ async def sign_up(request: request_body.SignUpRequest, db: AsyncSession = Depend
         await db.rollback()
         raise HTTPException(status_code=500, detail=f"Error registering user: {str(e)}")
 
-# # 로그인
-# @router.post("/api/login")
-# async def login(request: request_body.LoginRequest):
-#     conn = await postgres_connection.connect_db()
-#     # body에 email 담아서 받음
-    
-#     # DB에 email이 있으면(회원가입 된 상태면), 이름이랑 사원번호 돌려 줌
-#     # DB에 email이 없으면 401 Unauthorized 돌려줌
-#     # 클라이언트는 이걸 받고 회원가입하라고 리다이렉션
-#     try:
-#         # 사용자 정보 조회
-#         user = await conn.fetchrow(
-#             "SELECT company_name, employee_identification_number FROM users WHERE email = $1",
-#             request.email
-#         )
-#         await conn.close()
-
-#         if user:
-#             return {
-#                 "company_name": user['company_name'],
-#                 "employee_identification_number": user['employee_identification_number']
-#             }
-#         else:
-#             raise HTTPException(
-#                 status_code=HTTP_401_UNAUTHORIZED,
-#                 detail="Email not registered. Please sign up."
-#             )
-#     except Exception as e:
-#         await conn.close()
-#         raise HTTPException(status_code=500, detail=f"Error during login: {str(e)}")
-
 # 로그인
-@router.post("/api/login")
+@router.post("/api/login", summary="로그인", description="이메일로 로그인합니다. 등록되지 않은 이메일일 경우 401 에러를 반환합니다.")
 async def login(request: request_body.LoginRequest, db: AsyncSession = Depends(connect_db)):
     try:
         user = await db.execute(
@@ -175,6 +104,3 @@ async def login(request: request_body.LoginRequest, db: AsyncSession = Depends(c
             )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error during login: {str(e)}")
-
-
-

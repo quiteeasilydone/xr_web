@@ -2,88 +2,19 @@ from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 from fastapi import FastAPI, Request, HTTPException, Depends
 from schemas.request_body import Infra
-# from db import postgres_connection
-
-# 추가
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 from schemas.models import Infra as InfraModel
-# from schemas.models import ReportForm as ReportFormModel
-# from schemas.models import TopicForm as TopicFormModel
-# from schemas.models import InstructionForm as InstructionFormModel
 from db.postgres_connection import connect_db
-# from sqlalchemy import func
 from sqlalchemy.future import select
-# from sqlalchemy import delete
+
+from schemas.response_body import InfraBase, InfrasResponseModel
 
 router = APIRouter()
 
-
-# 앞으로 모든 API에는 사용자 정보가 있어야 합니다.
-
-# body에 사용자 정보(email)를 담아서 주면 참조하여 해당 사용자가 작성한 것들만 return
-
-# infra name에 해당하는 가장 최신의 report 받기 => reports.py에 있음
-# @router.get("/api/infra/report")
-# async def get_recent_report_form(company_name: str, infra: str = None, db: AsyncSession = Depends(connect_db)):
-#     if not infra:
-#         raise HTTPException(status_code=400, detail="Infra name is missing in query parameters")
-
-#     try:
-#         # 사용자와 인프라 이름으로 infra_id 조회
-#         infra_result = await db.execute(
-#             select(InfraModel.infra_id).where(InfraModel.infra_name == infra, InfraModel.company_name == company_name)
-#         )
-#         infra_id = infra_result.scalars().first()
-
-#         if not infra_id:
-#             raise HTTPException(status_code=404, detail=f'Infra name: {infra} not found for company: {company_name}')
-
-#         # 가장 최신의 report 조회
-#         report_result = await db.execute(
-#             select(ReportFormModel).where(ReportFormModel.infra_id == infra_id).order_by(ReportFormModel.report_form_id.desc()).limit(1)
-#         )
-#         report = report_result.scalar()
-
-#         if not report:
-#             raise HTTPException(status_code=404, detail=f'No reports found for infra name: {infra}')
-
-#         report_form_id = report.report_form_id
-
-#         # 카테고리 및 해당하는 주제와 지시사항 조회
-#         topic_result = await db.execute(
-#             select(TopicFormModel, InstructionFormModel).join(
-#                 InstructionFormModel, TopicFormModel.topic_form_id == InstructionFormModel.topic_form_id
-#             ).where(TopicFormModel.report_form_id == report_form_id)
-#         )
-#         topics = topic_result.fetchall()
-
-#         inspection_list = []
-#         for topic, instruction in topics:
-#             inspection_list.append({
-#                 'topic': topic.topic_form_name,
-#                 'instruction_list': [{
-#                     'instruction': instruction.instruction,
-#                     'instruction_type': instruction.instruction_type,
-#                     'options': instruction.options,
-#                     'answer': instruction.answer
-#                 }],
-#                 'image_required': topic.image_required
-#             })
-
-#         response_data = {
-#             'infra': infra,
-#             'report_form_id': report_form_id,
-#             'inspection_list': inspection_list
-#         }
-
-#         return JSONResponse(content=response_data, status_code=200)
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=f"Error retrieving data: {str(e)}")
-
-
 # 전체 설비 목록 가져오기
-@router.get("/api/infras")
+@router.get("/api/infras", summary="설비 목록 조회", description="회사 이름을 입력하여 해당 회사에 등록된 모든 설비 목록을 가져옵니다."
+            ,response_model = InfrasResponseModel)
 async def get_infra_list(company_name: str, db: AsyncSession = Depends(connect_db)):
     try:
         if not company_name:
@@ -101,9 +32,20 @@ async def get_infra_list(company_name: str, db: AsyncSession = Depends(connect_d
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
-
 # 설비 추가
-@router.post("/api/infra")
+@router.post("/api/infra", summary="설비 추가", description="새로운 설비를 추가합니다. 중복된 설비 이름이 존재하면 에러를 반환합니다."
+             ,responses={
+                200: {
+                    "description": "설비 추가 성공.",
+                    "content": {
+                        "application/json": {
+                            "example":{
+                                "message": "Infra added successfully"
+                            }                          
+                        }
+                    }
+                }
+            })
 async def add_infra(infra: Infra, db: AsyncSession = Depends(connect_db)):
     infra_name = infra.infra_name
     company_name = infra.company_name
@@ -115,7 +57,9 @@ async def add_infra(infra: Infra, db: AsyncSession = Depends(connect_db)):
     try:
         # 동일한 infra_name이 존재하는지 확인
         existing_infra_result = await db.execute(
-            select(InfraModel.infra_id).where(InfraModel.infra_name == infra_name)
+            select(InfraModel.infra_id).where(
+                InfraModel.infra_name == infra_name, InfraModel.company_name == company_name
+                )
         )
         existing_infra = existing_infra_result.scalars().first()
 

@@ -135,6 +135,18 @@ button {
   margin: 0 10px; /* 각 버튼 사이의 간격을 조절합니다. */
 }
 
+.question-type {
+  margin-bottom: 10px;
+  padding: 4px 8px;
+  border: none;
+  border-radius: 5px;
+  background-color: #28a745;
+  color: #fff;
+
+  pointer-events: none; /* 클릭 이벤트를 비활성화 */
+  cursor: default; /* 마우스 커서를 기본 상태로 유지 */
+}
+
 #user-info {
   position: absolute;
   top: 10px;

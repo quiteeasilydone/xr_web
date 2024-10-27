@@ -1,40 +1,27 @@
 from fastapi import APIRouter
 from fastapi import FastAPI, Request, HTTPException, Depends
-from fastapi.responses import JSONResponse
-from fastapi.responses import StreamingResponse
-from fastapi.responses import HTMLResponse
-
+from fastapi.responses import JSONResponse, StreamingResponse
 from schemas.response_body import User as response_user
 from schemas.request_body import User as request_user
-from schemas.request_body import WearableIdentifier
-from schemas.request_body import Company
-from schemas.request_body import Infra
+from schemas.request_body import WearableIdentifier, Company, Infra
 
 from typing import List
-# from db import postgres_connection
-
-from janus_client import JanusSession, JanusVideoRoomPlugin
-
+import qrcode  # QR 코드를 생성하기 위한 라이브러리
+import io  # QR 코드를 메모리에 저장하기 위한 라이브러리
 import json
-import qrcode # QR 코드를 생성하기 위한 라이브러리
-import io # QR 코드를 메모리에 저장하기 위한 라이브러리
-import base64 # QR 코드를 인코딩하기 위한 라이브러리
-
+import base64  # QR 코드를 인코딩하기 위한 라이브러리
 import os
 
-# 추가
 from sqlalchemy.ext.asyncio import AsyncSession
 from db.postgres_connection import connect_db
-from sqlalchemy import func
-from sqlalchemy.future import select
+from sqlalchemy import func, select, update
 from schemas.models import User as UserModel
-from sqlalchemy import update,func
+from janus_client import JanusSession, JanusVideoRoomPlugin
 
 router = APIRouter()
 
-
 # 더미 사용자 생성
-@router.post("/api/user")
+@router.post("/api/user", summary="더미 사용자 생성", description="데이터베이스에 새로운 더미 사용자(HCI_LAB)를 생성합니다.")
 async def make_dummy_company(db: AsyncSession = Depends(connect_db)):
     company_name = "HCI_LAB"
     email = "HCI_LAB@gmail.com"
@@ -55,8 +42,9 @@ async def make_dummy_company(db: AsyncSession = Depends(connect_db)):
         await db.rollback()
         raise HTTPException(status_code=500, detail=f"Error saving data: {str(e)}")
 
+
 # DB에 있는 모든 유저 정보 돌려주기
-@router.post("/api/users", response_model=List[response_user])
+@router.post("/api/users", response_model=List[response_user], summary="모든 사용자 정보 조회", description="데이터베이스에 있는 모든 사용자 정보를 반환합니다.")
 async def get_all_users(db: AsyncSession = Depends(connect_db)):
     try:
         result = await db.execute(select(UserModel))
@@ -64,7 +52,6 @@ async def get_all_users(db: AsyncSession = Depends(connect_db)):
         return users
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching users: {str(e)}")
-
 
 
 # qr code 생성 함수
@@ -86,23 +73,23 @@ def generate_qr_code(data: str) -> io.BytesIO:
 
 
 # 웹에서 호출하면 QR코드 화면 호스팅
-@router.post("/api/wearable-qr-image")
+@router.post("/api/wearable-qr-image", summary="QR 코드 생성(AND)", description="회사 이름을 포함한 QR 코드를 생성하여 이미지를 반환합니다.")
 async def get_qr_image_for_registering(body: request_user):
     company_name = body.company_name
     if not company_name:
         raise HTTPException(status_code=400, detail="company name is required")
 
     try:
-        # Generate the QR code with the company name
         qr_data = {"company_name": company_name}
-        qr_image = generate_qr_code(json.dumps(qr_data))  # QR 데이터는 문자열이어야 합니다.
+        qr_image = generate_qr_code(qr_data)
 
         return StreamingResponse(qr_image, media_type="image/png")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generating QR code: {str(e)}")
 
+
 # (로그인 한 사용자가) infra를 입력하면 infra에 해당하는 보고서 양식을 가져갈 수 있도록 QR 이미지 호스팅
-@router.post("/api/infra-qr-image")
+@router.post("/api/infra-qr-image", summary="설비 QR 코드 생성(AND)", description="설비와 회사 이름을 포함한 QR 코드를 생성하여 이미지를 반환합니다.")
 async def get_qr_image_for_registrate_infra(body: Infra):
     company_name = body.company_name
     infra = body.infra_name
@@ -113,7 +100,6 @@ async def get_qr_image_for_registrate_infra(body: Infra):
         raise HTTPException(status_code=400, detail="Company name is missing in request body")
 
     try:
-        # Generate the QR code with the company name and infra name
         qr_data = {"company_name": company_name, "infra_name": infra}
         qr_image = generate_qr_code(json.dumps(qr_data))
 
@@ -123,16 +109,16 @@ async def get_qr_image_for_registrate_infra(body: Infra):
 
 
 # 회사가 가지고 있는 모든 안드로이드 기기의 list 반환
-@router.post("/api/wearable-machine-lists")
+@router.post("/api/wearable-machine-lists", summary="회사 안드로이드 기기 목록 조회(AND)", description="회사 이름을 기준으로 안드로이드 기기 목록을 반환합니다.")
 async def get_wearable_machine_lists(body: Company, db: AsyncSession = Depends(connect_db)):
     try:
-        # 회사 이름을 통해 wearable_identification 배열 검색
         query = select(UserModel.wearable_identification).where(UserModel.company_name == body.company_name)
         result = await db.execute(query)
         wearable_identification = result.scalar()
 
+        # 회사가 없을 때, 에러 메세지 확인
         if not wearable_identification:
-            raise HTTPException(status_code=404, detail="Company not found")
+            raise HTTPException(status_code=404, detail="Wearable identification not found in company")
 
         return {"wearable_identifications": wearable_identification}
 
@@ -141,11 +127,11 @@ async def get_wearable_machine_lists(body: Company, db: AsyncSession = Depends(c
 
 
 # 특정 Android UUID가 존재하는지 확인
-@router.get("/api/wearable-machine-check/{android_UUID}")
+@router.get("/api/wearable-machine-check/{android_UUID}", summary="안드로이드 기기 확인(AND)", description="특정 Android UUID가 존재하는지 확인하고, 존재할 경우 관련된 회사 이름을 반환합니다.")
 async def get_wearable_machine_check(android_UUID: str, db: AsyncSession = Depends(connect_db)):
     try:
         query = select(UserModel.company_name).where(
-            func.array_contains(UserModel.wearable_identification, android_UUID)
+            func.array_position(UserModel.wearable_identification, android_UUID) != None
         )
         result = await db.execute(query)
         company_name = result.scalar()
@@ -159,6 +145,7 @@ async def get_wearable_machine_check(android_UUID: str, db: AsyncSession = Depen
         raise HTTPException(status_code=500, detail=f"Error occurred: {str(e)}")
 
 
+# Janus API 연동
 async def get_janus():
     base_url = os.environ['JANUS_ENDPOINT']
     session = JanusSession(base_url=base_url)
@@ -170,8 +157,9 @@ async def get_janus():
         await plugin_handle.destroy()
         await session.destroy()
 
-# TODO: 하나의 company_name에 중복된 UUID 입력시 예외처리
-@router.post("/api/registrate-machine-to-company")
+
+# 특정 회사에 기기 등록 및 Janus 방 생성
+@router.post("/api/registrate-machine-to-company", summary="기기 등록 및 Janus 방 생성(AND)", description="특정 회사에 기기를 등록하고 Janus 방을 생성합니다.")
 async def registrate_machine_to_company(
     wearable_identifier: WearableIdentifier, 
     plugin_handle: JanusVideoRoomPlugin = Depends(get_janus),
