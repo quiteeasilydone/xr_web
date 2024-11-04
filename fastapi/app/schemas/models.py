@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, BigInteger, ForeignKey, Boolean, ARRAY, Enum, VARCHAR
+from sqlalchemy import Column, Integer, String, BigInteger, ForeignKey, Boolean, ARRAY, Enum, VARCHAR, LargeBinary,Float
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.dialects.postgresql import ENUM
 
@@ -38,7 +38,7 @@ class TopicForm(Base):
     topic_form_id = Column(Integer, primary_key=True, index=True)
     report_form_id = Column(Integer, ForeignKey('report_forms.report_form_id', ondelete='CASCADE'), nullable=False)
     topic_form_name = Column(String(255), nullable=False)
-    image_required = Column(Boolean, nullable=False)
+    # image_required = Column(Boolean, nullable=False)
 
 class InstructionForm(Base):
     __tablename__ = 'instruction_forms'
@@ -47,6 +47,7 @@ class InstructionForm(Base):
     topic_form_id = Column(Integer, ForeignKey('topic_forms.topic_form_id', ondelete='CASCADE'), nullable=False)
     instruction = Column(String, nullable=False)
     instruction_type = Column(instruction_type_enum, nullable=False)
+    img_url = Column(String(2048), nullable = True)
     options = Column(ARRAY(VARCHAR(100)), nullable=True)
     answer = Column(ARRAY(VARCHAR(100)), nullable=True)
 
@@ -58,15 +59,35 @@ class PostedReport(Base):
     report_form_id = Column(Integer, ForeignKey('report_forms.report_form_id', ondelete='CASCADE'), nullable=False)
     start_time = Column(BigInteger, nullable=True)
     end_time = Column(BigInteger, nullable=True)
+    memo = Column(String(1000), nullable=True)
     company_name = Column(String(255), ForeignKey('users.company_name', ondelete='CASCADE'), nullable=False)
     user_name = Column(String(255), nullable=False)
+
 
 class MediaFile(Base):
     __tablename__ = 'media_files'
 
     media_id = Column(Integer, primary_key=True, index=True)
-    report_form_id = Column(Integer, ForeignKey('report_forms.report_form_id', ondelete='CASCADE'), nullable=True)
-    # topic_form_id = Column(Integer, ForeignKey('topic_forms.topic_form_id', ondelete='CASCADE'), nullable=True)
-    instruction_form_id = Column(Integer, ForeignKey('instruction_forms.instruction_form_id', ondelete='CASCADE'), nullable = True)
+    infra_id = Column(Integer, ForeignKey('infras.infra_id', ondelete = 'CASCADE'),nullable=False)
+    infra_name = Column(String(255), nullable=False)
+    company_name = Column(String(255), nullable=False, unique=True)
     file_type = Column(String(50), nullable=False)
-    file_path = Column(String(255), nullable=False)
+    file_name = Column(String(255), nullable=False)
+    # report_form = relationship("ReportForm", back_populates="media_files")
+    # topic_form = relationship("TopicForm", back_populates="media_files")
+
+class ImgFile(Base):
+    __tablename__ = 'img_files'
+
+    file_id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    file_name = Column(String(255), nullable=True)
+    file_size = Column(BigInteger, nullable=True)
+    file_data = Column(LargeBinary, nullable=True)
+
+
+class UserLocation(Base):
+    __tablename__ = 'user_location'
+    android_uuid = Column(String(100), nullable=False, primary_key=True)  
+    company_name = Column(String(255), ForeignKey('users.company_name', ondelete='CASCADE'), nullable=False)  # ForeignKey 유지
+    latitude = Column(Float, nullable=False)  
+    longitude = Column(Float, nullable=False) 

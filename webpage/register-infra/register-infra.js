@@ -23,7 +23,7 @@ function redirectToReport(infra) {
 
 function fetchInfraList() {
   // fetch 함수는 프로미스를 반환하므로 해당 프로미스를 반환
-  return fetch(`/api/infra-list?company_name=${companyName}`)
+  return fetch(`/api/infras?company_name=${companyName}`)
     .then((response) => response.json())
     .then((data) => {
       // 서버에서 받은 데이터 반환
@@ -68,7 +68,7 @@ async function sendRegisterRequest() {
     if (!response.ok) {
       throw new Error(response.statusText);
     }
-    location.reload()
+    location.reload();
   } catch (error) {
     console.error(error);
   }

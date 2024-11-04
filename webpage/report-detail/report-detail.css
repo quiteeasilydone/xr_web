@@ -1,14 +1,19 @@
 #report-title {
-    font-size: 24px;
-    margin-bottom: 20px;
-  }
-  
-  #report-content {
-    background-color: #f0f0f0;
-    padding: 20px;
-    border-radius: 5px;
-    overflow-y: auto;
-    min-height: 300px; /* 최소 높이 설정 */
-    min-width: 500px;
-  }
-  
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+
+#report-content {
+  background-color: #f0f0f0;
+  padding: 20px;
+  border-radius: 5px;
+  overflow-y: auto;
+  min-height: 300px; /* 최소 높이 설정 */
+  min-width: 500px;
+}
+
+.title {
+  font-size: 1.17em; /* 기본 <h3>의 폰트 크기와 동일 */
+  font-weight: bold; /* 기본 <h3>의 굵기와 동일 */
+  margin-right: 10px; /* 버튼과의 간격 추가 */
+}

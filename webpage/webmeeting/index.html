@@ -28,6 +28,17 @@
 <link rel="stylesheet" href="./css/demo.css" type="text/css"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.1.4/toastr.min.css"/>
+<style>
+	#user-info {
+	  position: absolute;
+	  top: 10px;
+	  right: 10px;
+	  text-align: right;
+	}
+	#user-info span {
+	  display: block;
+	}
+</style>
 </head>
 <body>
 <div class="container">
@@ -76,6 +87,16 @@
 												<a class="dropdown-item" href="#" id="1024">Cap to 1mbit</a>
 												<a class="dropdown-item" href="#" id="1500">Cap to 1.5mbit</a>
 												<a class="dropdown-item" href="#" id="2000">Cap to 2mbit</a>
+											</ul>
+										</div>
+										<div class="btn-group btn-group-sm">
+											<button id="media-sourceset" autocomplete="off" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown">
+												Camera 1
+											</button>
+											<ul id="media-source" class="dropdown-menu" role="menu">
+												<a class="dropdown-item" href="#" id="camera1">Camera 1</a>
+												<a class="dropdown-item" href="#" id="camera2">Camera 2</a>
+												<a class="dropdown-item" href="#" id="screen">Screen</a>
 											</ul>
 										</div>
 									</div>

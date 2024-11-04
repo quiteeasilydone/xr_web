@@ -1,10 +1,9 @@
 const companyName = getCookie("company");
 
 class Inspection {
-  constructor(topic, instructionList, imageRequired) {
+  constructor(topic, instructionList) {
     this.topic = topic;
     this.instruction_list = instructionList;
-    this.image_required = imageRequired;
   }
 
   changeTopicName(topic) {
@@ -20,9 +19,11 @@ class Inspection {
 }
 
 class Instruction {
-  constructor(instruction, instructionType, options, answer) {
+  constructor(instruction, instructionType, options, answer, imgUrl) {
     this.instruction = instruction;
     this.instruction_type = instructionType;
+    // 이미지 넣는 부분 작업할 것
+    this.img_url = imgUrl;
 
     // console.log(options);
     // console.log(answer);
@@ -136,6 +137,7 @@ function toggleInstructions(instructionContainer) {
   }
 }
 
+// 질문 추가 버튼 눌렀을 때 실행될 부분
 function addInstruction(instructionContainer) {
   const instructionElement = document.createElement("div"); // 새로운 지시사항 요소 생성
   const instructionInput = document.createElement("input"); // 지시사항 입력 필드 생성
@@ -172,7 +174,42 @@ function addInstruction(instructionContainer) {
   });
 
   optionsContainer.appendChild(addOptionBtn);
-  //optionsContainer.appendChild(toggleOptionsBtn);
+
+  // 이미지 업로드 기능
+  const uploadForm = document.createElement("form");
+  uploadForm.id = "upload-form";
+
+  // 파일 input
+  const fileInput = document.createElement("input");
+  // input 요소의 속성 설정
+  fileInput.type = "file";
+  fileInput.id = "image-file";
+  fileInput.name = "file";
+  fileInput.accept = "image/*";
+  uploadForm.appendChild(fileInput);
+
+  // 업로드 버튼
+  const fileSubmitBtn = document.createElement("button");
+  fileSubmitBtn.type = "submit";
+  fileSubmitBtn.textContent = "이미지 업로드";
+  uploadForm.appendChild(fileSubmitBtn);
+
+  // 주소 저장 텍스트
+  const imgUrlText = document.createElement("input");
+  imgUrlText.type = "hidden";
+  imgUrlText.classList.add("img_url");
+  uploadForm.appendChild(imgUrlText);
+
+  const sampleImage = document.createElement("img");
+  sampleImage.classList.add("example-image");
+  uploadForm.appendChild(sampleImage);
+
+  // 업로드 폼의 submit 이벤트에 핸들러 연결
+  uploadForm.addEventListener("submit", function (event) {
+    handleImageUpload(event, uploadForm);
+  });
+
+  instructionElement.appendChild(uploadForm);
 
   instructionElement.classList.add("instruction");
 
@@ -323,7 +360,9 @@ function saveReportForm() {
 }
 
 function checkEmptyInputs() {
-  const inputs = document.querySelectorAll("input");
+  const inputs = document.querySelectorAll(
+    "input:not([type='file']):not([type='hidden'])"
+  ); // 파일 및 숨겨진 input 제외
   let isEmpty = false;
 
   inputs.forEach(function (input) {
@@ -333,7 +372,7 @@ function checkEmptyInputs() {
   });
 
   if (isEmpty) {
-    alert("빈 입력 필드가 있습니다. 모두 채워주세요");
+    alert("빈 입력 필드가 있습니다. 모두 채워주세요.");
     return true;
   }
   return false;
@@ -372,16 +411,25 @@ function generateJson() {
       //const instructionType = instructionTypeElements[i].value; // 선택한 instructionType 가져오기
       console.log(instructionValue, instructionType);
 
+      // 이미지 주소 없는지 확인해보자
+      const formElement = instruction.querySelector("#upload-form"); // 지시사항 내의 upload-form 가져오기
+      console.log("form Element 불러오기");
+      console.log * formElement;
+      const imgUrlInput = formElement.querySelector("input.img_url");
+      const imgUrl = imgUrlInput.value;
+      console.log(`이미지 주소  ${imgUrlInput.value}`);
+
       const instructionObject = new Instruction(
         instructionValue,
         instructionType,
         getOptions(instruction, instructionType),
-        null
+        null,
+        imgUrl
       ); // Instruction 객체 생성
       instructionList.push(instructionObject); // instructionList에 추가
     }
 
-    const inspection = new Inspection(topicName, instructionList, false);
+    const inspection = new Inspection(topicName, instructionList);
     inspectionList.push(inspection);
   });
 
@@ -396,7 +444,7 @@ function generateJson() {
 
 function sendRequest(jsonData) {
   // HTTP POST 요청을 보낼 URL
-  const url = "https://" + window.location.hostname + "/api/reports";
+  const url = "https://" + window.location.hostname + "/api/report";
   jsonString = jsonData.toJsonString();
   console.log(jsonString);
 
@@ -450,7 +498,7 @@ function addOptionsToInfraOption(optionsArray) {
 
 function fetchInfraList() {
   // fetch 함수는 프로미스를 반환하므로 해당 프로미스를 반환
-  return fetch(`/api/infra-list?company_name=${companyName}`)
+  return fetch(`/api/infras?company_name=${companyName}`)
     .then((response) => response.json())
     .then((data) => {
       // 서버에서 받은 데이터 반환
@@ -488,3 +536,53 @@ document.addEventListener("DOMContentLoaded", function () {
     //generateJson();
   });
 });
+
+// 이미지 submit 버튼 클릭시 실행될 함수
+// 이미지 업로드 함수
+async function handleImageUpload(event, formElement) {
+  event.preventDefault(); // 폼 기본 제출 동작 방지
+
+  const fileInput = formElement.querySelector("input[type='file']"); // 해당 폼 내의 파일 input 선택
+  const file = fileInput.files[0];
+  // 이미지 주소 입력할 곳 가져오기
+  const imgUrlInput = formElement.querySelector("input.img_url"); // .img_url 클래스를 가진 hidden input 선택
+
+  if (!file) {
+    alert("Please select a file to upload.");
+    return;
+  }
+
+  // FormData에 파일 추가
+  const formData = new FormData();
+  formData.append("file", file);
+
+  try {
+    // 이미지 업로드 API 호출
+    const response = await fetch("https://xrweb.kro.kr/api/upload-image", {
+      method: "POST",
+      body: formData,
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const uploadedImageUrl = data.url; // 업로드된 이미지 URL
+      imgUrlInput.value = uploadedImageUrl;
+
+      // img 요소를 가져와서 src에 URL을 등록
+      const imgElement = formElement.querySelector("img.example-image");
+      if (imgElement) {
+        imgElement.src = uploadedImageUrl; // 업로드된 이미지 URL로 설정
+      } else {
+        console.error("Image element not found.");
+      }
+
+      alert("Image uploaded successfully!");
+    } else {
+      const errorData = await response.json();
+      alert(`Error: ${errorData.error}`);
+    }
+  } catch (error) {
+    console.error("Error uploading the image:", error);
+    alert("Error uploading the image. Please try again later.");
+  }
+}

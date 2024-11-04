@@ -13,3 +13,4 @@ qrcode[pil]
 janus-client
 greenlet>=1.0.0 
 sqlalchemy
+psycopg2-binary
