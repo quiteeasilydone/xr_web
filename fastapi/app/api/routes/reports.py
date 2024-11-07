@@ -43,9 +43,12 @@ async def submit_report_form(
             raise HTTPException(status_code=400, detail="Infra field is required")
 
         infra_id_result = await db.execute(
-            select(InfraModel.infra_id).where(InfraModel.infra_name == infra_name)
+            select(InfraModel.infra_id).where(
+                InfraModel.infra_name == infra_name,
+                InfraModel.company_name == company_name)
         )
         infra_id = infra_id_result.scalars().first()
+
 
         if not infra_id:
             raise HTTPException(status_code=404, detail="Infra not found")
@@ -59,6 +62,7 @@ async def submit_report_form(
 
         existing_report_form = existing_report_form_result.scalars().first()
         
+
         # 기존 정보 삭제
         if existing_report_form is not None:
             await db.execute(
@@ -122,9 +126,12 @@ async def get_report_form(
     
     try:
         infra_id_result = await db.execute(
-            select(InfraModel.infra_id).where(InfraModel.infra_name == infra)
+            select(InfraModel.infra_id).where(
+                InfraModel.infra_name == infra,
+                InfraModel.company_name == company_name)
         )
         infra_id = infra_id_result.scalars().first()
+
 
         if not infra_id:
             raise HTTPException(status_code=404, detail="Infra not found")
@@ -133,11 +140,14 @@ async def get_report_form(
 
         if company_name:
             stmt = stmt.where(ReportFormModel.company_name == company_name)
+
         stmt = stmt.order_by(ReportFormModel.report_form_id.desc()).limit(1)
         result = await db.execute(stmt)
         
+
         report_form = result.fetchone()
         
+
         if not report_form:
             raise HTTPException(
                 status_code=404, detail=f"No report form found for infra '{infra}'"
