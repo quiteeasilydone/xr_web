@@ -11,6 +11,7 @@ from db.postgres_connection import connect_db
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import func
+import uuid
 
 router = APIRouter()
 
@@ -68,11 +69,15 @@ async def sign_up(request: request_body.SignUpRequest, db: AsyncSession = Depend
                 detail="User with this email or employee identification number already exists."
             )
 
+        # 디폴트 uuid 생성
+        uuid_list = [str(uuid.uuid4())]
         # 새로운 사용자 삽입
         new_user = UserModel(
             email=request.email,
             company_name=request.company_name,
-            employee_identification_number=request.employee_identification_number
+            employee_identification_number=request.employee_identification_number,
+            # TODO wearable_uuid 디폴트로 추가
+            wearable_identification = uuid_list
         )
         db.add(new_user)
         await db.commit()

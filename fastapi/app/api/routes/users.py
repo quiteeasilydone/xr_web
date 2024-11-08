@@ -178,6 +178,7 @@ async def registrate_machine_to_company(
         result = await db.execute(stmt)
         await db.commit()
 
+        
         # Janus 방 생성
         room_config = {
             "description": f"Room for {company_name}",
