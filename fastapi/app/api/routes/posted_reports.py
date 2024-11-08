@@ -1,5 +1,4 @@
-from fastapi import APIRouter
-from fastapi import FastAPI, Request, HTTPException, Depends, File, UploadFile
+from fastapi import APIRouter, HTTPException, Depends, File, UploadFile, Form
 from datetime import timedelta
 from db import postgres_connection
 from schemas import response_body
@@ -36,6 +35,7 @@ from reportlab.lib.units import inch
 from PIL import Image
 import io
 
+import requests
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
 from reportlab.platypus import Table, TableStyle
@@ -44,7 +44,7 @@ from reportlab.pdfgen import canvas
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 
-
+import urllib.parse
 
 router = APIRouter()
 
@@ -193,7 +193,6 @@ async def get_posted_report_from_minio(posted_report_id: int = None):
         raise HTTPException(
             status_code=400, detail="posted_report_id is missing in query parameters"
         )
-
     try:
         bucket_name = os.environ["MINIO_BUCKET"]
         objects = minio_client.list_objects(bucket_name)
@@ -307,7 +306,7 @@ async def get_posted_reports_detail(
             status_code=400, detail="posted_report_id is missing in query parameters"
         )
     try:
-        file_name = f"{posted_report_id}.json"
+        file_name = str(posted_report_id) + '_' + infra + "_" + company_name
         bucket_name = os.environ["MINIO_BUCKET"]
         response = minio_client.get_object(bucket_name, file_name)
 
@@ -325,149 +324,6 @@ async def get_posted_reports_detail(
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
-# from reportlab.pdfbase.ttfonts import TTFontCollection
-
-pdfmetrics.registerFont(TTFont("NotoSansKR", "/usr/share/fonts/opentype/noto/NotoSansKR-Medium.ttf"))
-
-@router.get("/api/test")
-async def get_test():
-
-    buffer = BytesIO()
-    c = canvas.Canvas(buffer, pagesize=letter)
-
-    c.setFont("NotoSansKR", 12)
-    c.drawString(100, 700, "한글 예제 텍스트")
-
-    c.showPage()
-    c.save()
-
-    buffer.seek(0)
-    return StreamingResponse(
-        buffer, media_type="application/pdf", headers={"Content-Disposition": "attachment; filename=report_test.pdf"}
-    )
-
-
-# @router.get("/api/posted-reports-detail-pdf", summary="특정 보고서 상세 조회(PDF)", description="설비와 회사 이름, 보고서 ID를 기준으로 MinIO에 저장된 특정 보고서를 PDF로 변환하여 조회합니다.")
-# async def get_posted_reports_detail_pdf(
-#     infra: str, company_name: str, posted_report_id: int, db: AsyncSession = Depends(connect_db)
-# ):
-#     if not infra:
-#         raise HTTPException(
-#             status_code=400, detail="Infra name is missing in query parameters"
-#         )
-#     if not company_name:
-#         raise HTTPException(
-#             status_code=400, detail="company_name is missing in query parameters"
-#         )
-#     if not posted_report_id:
-#         raise HTTPException(
-#             status_code=400, detail="posted_report_id is missing in query parameters"
-#         )
-    
-#     try:
-#         file_name = f"{posted_report_id}.json"
-#         bucket_name = os.environ["MINIO_BUCKET"]
-#         response = minio_client.get_object(bucket_name, file_name)
-
-#         data = response.read()
-#         response.close()
-#         response.release_conn()
-
-#         data_str = data.decode("utf-8")
-#         report_data = json.loads(data_str)
-
-#         pdf_buffer = BytesIO()
-
-#         c = canvas.Canvas(pdf_buffer, pagesize=letter)
-#         pdfmetrics.registerFont(TTFont("NotoSansKR", "/usr/share/fonts/opentype/noto/NotoSansKR-Medium.ttf"))
-#         c.setFont("NotoSansKR", 12)
-#         basic_info = [
-#             ["Report ID", posted_report_id],
-#             ["Infrastructure", infra],
-#             ["Company Name", company_name],
-#             ["Start Time", report_data.get("start_time", "N/A")],
-#             ["End Time", report_data.get("end_time", "N/A")],
-#             ["User Name", report_data.get("user_name", "N/A")],
-#         ]
-#         table = Table(basic_info, colWidths=[2 * inch, 4 * inch])
-#         table.setStyle(TableStyle([
-#             ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
-#             ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
-#             ("ALIGN", (0, 0), (-1, -1), "LEFT"),
-#             ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-#             ("FONTSIZE", (0, 0), (-1, -1), 10),
-#             ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
-#             ("BACKGROUND", (0, 1), (-1, -1), colors.beige),
-#             ("GRID", (0, 0), (-1, -1), 1, colors.black),
-#         ]))
-        
-#         table.wrapOn(c, 100, 750)
-#         table.drawOn(c, 100, 650)
-#         y_position = 620
-
-#         inspection_list = report_data.get("inspection_list", [])
-#         for i, topic in enumerate(inspection_list):
-#             # c.setFont("Helvetica-Bold", 12)
-#             c.setFont("NotoSansKR", 12)
-#             c.drawString(100, y_position, f"Topic {i + 1}: {topic['topic']}")
-#             y_position -= 20
-
-#             if y_position < 50:
-#                 c.showPage()
-#                 y_position = 750
-
-#             for instruction in topic["instruction_list"]:
-#                 # c.setFont("Helvetica", 10)
-#                 c.setFont("NotoSansKR", 12)
-#                 c.drawString(120, y_position, f"Instruction: {instruction['instruction']}")
-#                 y_position -= 15
-#                 c.drawString(120, y_position, f"Type: {instruction['instruction_type']}")
-#                 y_position -= 15
-#                 if instruction["options"]:
-#                     c.drawString(120, y_position, f"Options: {', '.join(instruction['options'])}")
-#                     y_position -= 15
-#                 c.drawString(120, y_position, f"Answer: {', '.join(instruction['answer'])}")
-#                 y_position -= 50
-
-#                 if instruction["img_url"]:
-#                     try:
-#                         file_id = int(instruction["img_url"].split("/")[-1])
-                        
-#                         result = await db.execute(
-#                             select(ImgFileModel).where(ImgFileModel.file_id == file_id)
-#                         )
-#                         image_record = result.scalars().first()
-                        
-#                         if image_record and image_record.file_data:
-#                             image = Image.open(io.BytesIO(image_record.file_data))
-#                             image.thumbnail((3 * inch, 2 * inch))  
-#                             image_path = f"/tmp/{file_id}.jpg"
-#                             image.save(image_path, format="JPEG")
-
-#                             c.drawImage(image_path, 120, y_position - 100, width=3 * inch, height=2 * inch)
-#                             y_position -= 120  
-#                         else:
-#                             c.drawString(120, y_position, "Image not found in database.")
-#                             y_position -= 20
-
-#                     except Exception as img_err:
-#                         c.drawString(120, y_position, f"Error loading image: {img_err}")
-#                         y_position -= 20
-
-#                 y_position -= 20
-
-
-#         c.showPage()
-#         c.save()
-
-#         pdf_buffer.seek(0)
-
-#         return StreamingResponse(
-#             pdf_buffer, media_type="application/pdf", headers={"Content-Disposition": f"attachment; filename=report_{posted_report_id}.pdf"}
-#         )
-
-#     except Exception as e:
-#         return JSONResponse(content={"error": str(e)}, status_code=500)
 
 @router.get("/api/posted-reports-detail-pdf", summary="특정 보고서 상세 조회(PDF)", description="설비와 회사 이름, 보고서 ID를 기준으로 MinIO에 저장된 특정 보고서를 PDF로 변환하여 조회합니다.")
 async def get_posted_reports_detail_pdf(
@@ -487,7 +343,7 @@ async def get_posted_reports_detail_pdf(
         )
     
     try:
-        file_name = f"{posted_report_id}.json"
+        file_name = str(posted_report_id) + '_' + infra + "_" + company_name
         bucket_name = os.environ["MINIO_BUCKET"]
         response = minio_client.get_object(bucket_name, file_name)
 
@@ -578,6 +434,9 @@ async def get_posted_reports_detail_pdf(
                         
                         if image_record and image_record.file_data:
                             image = Image.open(io.BytesIO(image_record.file_data))
+                            if image.mode == 'RGBA':
+                                image = image.convert('RGB')
+            
                             image.thumbnail((3 * inch, 2 * inch))  
                             image_path = f"/tmp/{file_id}.jpg"
                             image.save(image_path, format="JPEG")
@@ -615,129 +474,190 @@ async def get_posted_reports_detail_pdf(
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
 
-@router.get("/api/posted-reports-detail-pdf", summary="특정 보고서 상세 조회(PDF)", description="설비와 회사 이름, 보고서 ID를 기준으로 MinIO에 저장된 특정 보고서를 PDF로 변환하여 조회합니다.")
-async def get_posted_reports_detail_pdf(
-    infra: str, company_name: str, posted_report_id: int, db: AsyncSession = Depends(connect_db)
-):
-    if not infra:
-        raise HTTPException(
-            status_code=400, detail="Infra name is missing in query parameters"
-        )
-    if not company_name:
-        raise HTTPException(
-            status_code=400, detail="company_name is missing in query parameters"
-        )
-    if not posted_report_id:
-        raise HTTPException(
-            status_code=400, detail="posted_report_id is missing in query parameters"
-        )
+# @router.get("/api/posted-reports-detail-pdf", summary="특정 보고서 상세 조회(PDF)", description="설비와 회사 이름, 보고서 ID를 기준으로 MinIO에 저장된 특정 보고서를 PDF로 변환하여 조회합니다.")
+# async def get_posted_reports_detail_pdf(
+#     infra: str, company_name: str, posted_report_id: int, db: AsyncSession = Depends(connect_db)
+# ):
+#     if not infra:
+#         raise HTTPException(
+#             status_code=400, detail="Infra name is missing in query parameters"
+#         )
+#     if not company_name:
+#         raise HTTPException(
+#             status_code=400, detail="company_name is missing in query parameters"
+#         )
+#     if not posted_report_id:
+#         raise HTTPException(
+#             status_code=400, detail="posted_report_id is missing in query parameters"
+#         )
     
-    try:
-        file_name = f"{posted_report_id}.json"
-        bucket_name = os.environ["MINIO_BUCKET"]
-        response = minio_client.get_object(bucket_name, file_name)
+#     try:
+#         file_name = str(posted_report_id) + '_' + infra + "_" + company_name
+#         bucket_name = os.environ["MINIO_BUCKET"]
+#         response = minio_client.get_object(bucket_name, file_name)
 
-        data = response.read()
-        response.close()
-        response.release_conn()
+#         data = response.read()
+#         response.close()
+#         response.release_conn()
 
-        data_str = data.decode("utf-8")
-        report_data = json.loads(data_str)
+#         data_str = data.decode("utf-8")
+#         report_data = json.loads(data_str)
 
-        pdf_buffer = BytesIO()
+#         pdf_buffer = BytesIO()
 
-        c = canvas.Canvas(pdf_buffer, pagesize=letter)
-        pdfmetrics.registerFont(TTFont("NotoSansKR", "/usr/share/fonts/opentype/noto/NotoSansKR-Medium.ttf"))
-        c.setFont("NotoSansKR", 12)
-        basic_info = [
-            ["Report ID", posted_report_id],
-            ["Infrastructure", infra],
-            ["Company Name", company_name],
-            ["Start Time", report_data.get("start_time", "N/A")],
-            ["End Time", report_data.get("end_time", "N/A")],
-            ["User Name", report_data.get("user_name", "N/A")],
-        ]
-        table = Table(basic_info, colWidths=[2 * inch, 4 * inch])
-        table.setStyle(TableStyle([
-            ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
-            ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
-            ("ALIGN", (0, 0), (-1, -1), "LEFT"),
-            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-            ("FONTSIZE", (0, 0), (-1, -1), 10),
-            ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
-            ("BACKGROUND", (0, 1), (-1, -1), colors.beige),
-            ("GRID", (0, 0), (-1, -1), 1, colors.black),
-        ]))
+#         c = canvas.Canvas(pdf_buffer, pagesize=letter)
+#         pdfmetrics.registerFont(TTFont("NotoSansKR", "/usr/share/fonts/opentype/noto/NotoSansKR-Medium.ttf"))
+#         c.setFont("NotoSansKR", 12)
+#         basic_info = [
+#             ["Report ID", posted_report_id],
+#             ["Infrastructure", infra],
+#             ["Company Name", company_name],
+#             ["Start Time", report_data.get("start_time", "N/A")],
+#             ["End Time", report_data.get("end_time", "N/A")],
+#             ["User Name", report_data.get("user_name", "N/A")],
+#         ]
+#         table = Table(basic_info, colWidths=[2 * inch, 4 * inch])
+#         table.setStyle(TableStyle([
+#             ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
+#             ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+#             ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+#             ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+#             ("FONTSIZE", (0, 0), (-1, -1), 10),
+#             ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+#             ("BACKGROUND", (0, 1), (-1, -1), colors.beige),
+#             ("GRID", (0, 0), (-1, -1), 1, colors.black),
+#         ]))
         
-        table.wrapOn(c, 100, 750)
-        table.drawOn(c, 100, 650)
-        y_position = 620
-        page_threshold = 50  # 페이지 전환 임계값
+#         table.wrapOn(c, 100, 750)
+#         table.drawOn(c, 100, 650)
+#         y_position = 620
+#         page_threshold = 50  # 페이지 전환 임계값
 
-        inspection_list = report_data.get("inspection_list", [])
-        for i, topic in enumerate(inspection_list):
-            c.setFont("NotoSansKR", 12)
-            c.drawString(100, y_position, f"Topic {i + 1}: {topic['topic']}")
-            y_position -= 20
+#         inspection_list = report_data.get("inspection_list", [])
+#         for i, topic in enumerate(inspection_list):
+#             c.setFont("NotoSansKR", 12)
+#             c.drawString(100, y_position, f"Topic {i + 1}: {topic['topic']}")
+#             y_position -= 20
 
-            if y_position < page_threshold:
-                c.showPage()
-                y_position = 750
+#             if y_position < page_threshold:
+#                 c.showPage()
+#                 y_position = 750
 
-            for instruction in topic["instruction_list"]:
-                c.setFont("NotoSansKR", 12)
-                c.drawString(120, y_position, f"Instruction: {instruction['instruction']}")
-                y_position -= 15
-                c.drawString(120, y_position, f"Type: {instruction['instruction_type']}")
-                y_position -= 15
-                if instruction["options"]:
-                    c.drawString(120, y_position, f"Options: {', '.join(instruction['options'])}")
-                    y_position -= 15
-                c.drawString(120, y_position, f"Answer: {', '.join(instruction['answer'])}")
-                y_position -= 50
+#             for instruction in topic["instruction_list"]:
+#                 c.setFont("NotoSansKR", 12)
+#                 c.drawString(120, y_position, f"Instruction: {instruction['instruction']}")
+#                 y_position -= 15
+#                 c.drawString(120, y_position, f"Type: {instruction['instruction_type']}")
+#                 y_position -= 15
+#                 if instruction["options"]:
+#                     c.drawString(120, y_position, f"Options: {', '.join(instruction['options'])}")
+#                     y_position -= 15
+#                 c.drawString(120, y_position, f"Answer: {', '.join(instruction['answer'])}")
+#                 y_position -= 50
 
-                if instruction["img_url"]:
-                    try:
-                        file_id = int(instruction["img_url"].split("/")[-1])
+#                 if instruction["img_url"]:
+#                     try:
+#                         file_id = int(instruction["img_url"].split("/")[-1])
                         
-                        result = await db.execute(
-                            select(ImgFileModel).where(ImgFileModel.file_id == file_id)
-                        )
-                        image_record = result.scalars().first()
+#                         result = await db.execute(
+#                             select(ImgFileModel).where(ImgFileModel.file_id == file_id)
+#                         )
+#                         image_record = result.scalars().first()
                         
-                        if image_record and image_record.file_data:
-                            image = Image.open(io.BytesIO(image_record.file_data))
-                            image.thumbnail((3 * inch, 2 * inch))  
-                            image_path = f"/tmp/{file_id}.jpg"
-                            image.save(image_path, format="JPEG")
+#                         if image_record and image_record.file_data:
+#                             image = Image.open(io.BytesIO(image_record.file_data))
+#                             image.thumbnail((3 * inch, 2 * inch))  
+#                             image_path = f"/tmp/{file_id}.jpg"
+#                             image.save(image_path, format="JPEG")
 
-                            c.drawImage(image_path, 120, y_position - 100, width=3 * inch, height=2 * inch)
-                            y_position -= 120  
-                        else:
-                            c.drawString(120, y_position, "Image not found in database.")
-                            y_position -= 20
+#                             c.drawImage(image_path, 120, y_position - 100, width=3 * inch, height=2 * inch)
+#                             y_position -= 120  
+#                         else:
+#                             c.drawString(120, y_position, "Image not found in database.")
+#                             y_position -= 20
 
-                    except Exception as img_err:
-                        c.drawString(120, y_position, f"Error loading image: {img_err}")
-                        y_position -= 20
+#                     except Exception as img_err:
+#                         c.drawString(120, y_position, f"Error loading image: {img_err}")
+#                         y_position -= 20
 
-                y_position -= 20
+#                 y_position -= 20
                 
-                if y_position < page_threshold:
-                    c.showPage()
-                    y_position = 750
+#                 if y_position < page_threshold:
+#                     c.showPage()
+#                     y_position = 750
 
-        c.showPage()
-        c.save()
+#         c.showPage()
+#         c.save()
 
-        pdf_buffer.seek(0)
+#         pdf_buffer.seek(0)
 
-        return StreamingResponse(
-            pdf_buffer, media_type="application/pdf", headers={"Content-Disposition": f"attachment; filename=report_{posted_report_id}.pdf"}
-        )
+#         return StreamingResponse(
+#             pdf_buffer, media_type="application/pdf", headers={"Content-Disposition": f"attachment; filename=report_{posted_report_id}.pdf"}
+#         )
 
+#     except Exception as e:
+#         return JSONResponse(content={"error": str(e)}, status_code=500)
+
+# def convert_audio_to_text(audio_file_data, client_id, client_secret):
+#     url = "https://naveropenapi.apigw.ntruss.com/recog/v1/stt?lang=Kor"
+#     headers = {
+#         "X-NCP-APIGW-API-KEY-ID": client_id,
+#         "X-NCP-APIGW-API-KEY": client_secret,
+#         "Content-Type": "application/octet-stream",
+#     }
+
+#     response = requests.post(url, headers=headers, data=audio_file_data)
+
+#     if response.status_code == 200:
+#         result = response.json()
+#         return result.get("text", "")
+#     else:
+#         raise Exception(f"Failed to convert audio to text: {response.text}")
+
+@router.post("/api/convert-audio-to-text", summary="음성 파일 텍스트 변환(AND)", description="음성 파일을 텍스트로 변환해서 반환합니다."
+             ,responses={
+                200: {
+                    "description": "텍스트 변환 성공.",
+                    "content": {
+                        "application/json": {
+                            "example":{
+                                "message": "Audio convert successfully",
+                                "text": "안녕하세요. 만나서 반갑습니다.",
+                            }
+                        }
+                    }
+                }
+            })
+async def convert_audio_to_text(file: UploadFile = File(...)):
+    try:
+        audio_file_data = await file.read()
+
+        url = "https://naveropenapi.apigw.ntruss.com/recog/v1/stt?lang=Kor"
+        headers = {
+            "X-NCP-APIGW-API-KEY-ID": os.environ["NAVER_CLOUD_CLIENT"],
+            "X-NCP-APIGW-API-KEY": os.environ["NAVER_CLOUD_SECRET"],
+            "Content-Type": "application/octet-stream",
+        }
+
+        response = requests.post(url, headers=headers, data=audio_file_data)
+
+
+        if response.status_code == 200:
+            result = response.json()
+            return JSONResponse(
+            content={
+                "message": "Audio convert successfully",
+                "text": result,
+            },
+            status_code=200
+            )
+            
+        else:
+            raise Exception(f"Failed to convert audio to text: {response.text}")
+    
     except Exception as e:
-        return JSONResponse(content={"error": str(e)}, status_code=500)
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 
 # 보고서 등록하기
@@ -766,6 +686,14 @@ async def submit_inspected_report(
         inspection_list = data.inspection_list
         user_name = data.user_name
         memo = data.memo
+        # start_time = datetime.fromisoformat(data['start_time'])
+        # end_time = datetime.fromisoformat(data['end_time'])
+        # infra_name = data['infra']
+        # company_name = data['company_name']
+        # user_name = data['user_name']
+
+        # audio_file_data = await file.read()
+        # audio_text = convert_audio_to_text(audio_file_data, os.environ["NAVER_CLOUD_CLIENT"], os.environ["NAVER_CLOUD_SECRET"])        
 
         infra_id_result = await db.execute(
             select(InfraModel.infra_id).where(
@@ -807,7 +735,7 @@ async def submit_inspected_report(
         last_posted_report_id = last_posted_report_count.scalar()
 
         bucket_name = os.environ["MINIO_BUCKET"]
-        posted_report_path = "/" + bucket_name + "/" + str(last_posted_report_id + 1)
+        posted_report_path = "/" + bucket_name + "/" + str(last_posted_report_id + 1) + "_" + infra_name + "_" + company_name
 
         start_time_unix = int(start_time.timestamp())
         end_time_unix = int(end_time.timestamp())
@@ -819,7 +747,7 @@ async def submit_inspected_report(
             end_time=end_time_unix,
             company_name=company_name,
             user_name=user_name,
-            memo= memo
+            memo= memo 
         )
 
         db.add(new_report)
@@ -829,17 +757,31 @@ async def submit_inspected_report(
         posted_report_id = new_report.posted_report_id
 
         data_json = json.dumps(data.dict())
-        json_file_name = f"{posted_report_id}.json"
+        # data_json = json.dumps(data)
+        # file 이름 설정
+        file_name = str(posted_report_id) + '_' + infra_name + "_" + company_name
 
         with io.BytesIO(data_json.encode("utf-8")) as data_file:
             minio_client.put_object(
                 bucket_name,
-                json_file_name,
+                file_name,
                 data_file,
                 length=-1,
                 part_size=10 * 1024 * 1024,
                 content_type="application/json",
             )
+
+        # try:
+        #     minio_client.put_object(
+        #         bucket_name = os.environ["MINIO_BUCKET_AUDIO"],
+        #         object_name = file_name,
+        #         data = io.BytesIO(audio_file_data),
+        #         length = len(audio_file_data),
+        #         content_type = file.content_type
+        #     ) 
+
+        # except Exception as e:
+        #     raise HTTPException(status_code = 500, detail =f"Error saving file from MinIO: {str(e)}")
 
         await db.commit()
 
@@ -1051,3 +993,94 @@ async def get_image(file_id : int, db: AsyncSession = Depends(connect_db)):
         raise HTTPException(status_code=404, detail="image not found")
     
     return StreamingResponse(BytesIO(image.file_data), media_type="image/jpeg")
+
+# 음성 파일 minio 저장
+@router.post("/api/audio/", summary="음성 메모 파일 저장(AND)", description="제출 보고서에 해당하는 음성 메모 파일을 저장합니다."
+            ,responses={
+                200: {
+                    "description": "음성 메모 저장 성공.",
+                    "content": {
+                        "application/json": {
+                            "example":{
+                                "message": "Audio submitted successfully",
+                                "file_name": "1_infra_company-name"
+                            }                          
+                        }
+                    }
+                }
+            })
+async def submit_audio(
+    infra: str,
+    company_name: str,
+    posted_report_id: int,
+    file: UploadFile = File(...)
+    ):
+    try:        
+        bucket_name = os.environ["MINIO_BUCKET_AUDIO"]
+
+        audio_file_data = await file.read()    
+        
+        file_name = str(posted_report_id) + '_' + infra + "_" + company_name
+
+        try:
+            minio_client.put_object(
+                bucket_name = bucket_name,
+                object_name = file_name,
+                data = io.BytesIO(audio_file_data),
+                length = len(audio_file_data),
+                content_type = file.content_type
+            ) 
+
+        except Exception as e:
+            raise HTTPException(status_code = 500, detail =f"Error saving file from MinIO: {str(e)}")
+
+        return JSONResponse(
+            content={
+                "message": "Audio submitted successfully",
+                "file_name": file_name
+            },
+            status_code=200,
+        )
+
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving media: {str(e)}")
+
+
+@router.get("/api/audio/", summary="제출 보고서 음성 메모 조회(AND)", description="제출 보고서에 해당하는 음성 메모 파일을 조회합니다."
+            ,responses={
+                200: {
+                    "description": "음성 메모 조회 성공.",
+                    "content": {
+                        "audio/wav": {
+                            "example":{
+                                "body": "음성 메모 데이터"
+                            }                          
+                        }
+                    }
+                }
+            })
+async def get_audio(
+    infra: str,
+    company_name: str,
+    posted_report_id: int):
+
+    try:        
+        bucket_name = os.environ["MINIO_BUCKET_AUDIO"]
+        media_type = "audio/wav"
+        
+        file_name = str(posted_report_id) + "_" + infra + "_" + company_name
+        try:
+            file_data = minio_client.get_object(bucket_name, file_name)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error retrieving file from MinIO: {str(e)}")
+
+        encoded_filename = urllib.parse.quote(file_name)
+
+        return StreamingResponse(
+            io.BytesIO(file_data.read()), 
+            media_type=media_type,
+            headers={"Content-Disposition": f"attachment; filename*=UTF-8''{encoded_filename}"}
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving media: {str(e)}")
