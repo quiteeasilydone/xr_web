@@ -644,10 +644,11 @@ async def convert_audio_to_text(file: UploadFile = File(...)):
 
         if response.status_code == 200:
             result = response.json()
+            result_text = result.get("text", "")
             return JSONResponse(
             content={
                 "message": "Audio convert successfully",
-                "text": result,
+                "text": result_text,
             },
             status_code=200
             )
