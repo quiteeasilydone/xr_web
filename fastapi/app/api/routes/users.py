@@ -175,9 +175,11 @@ async def registrate_machine_to_company(
             .where(UserModel.company_name == company_name)
             .values(wearable_identification= func.array_append(UserModel.wearable_identification, wearable_identification))
         )
-        result = await db.execute(stmt)
+        await db.execute(stmt)
+        # result = await db.execute(stmt)
         await db.commit()
 
+        
         # Janus 방 생성
         room_config = {
             "description": f"Room for {company_name}",
@@ -188,8 +190,10 @@ async def registrate_machine_to_company(
             "videocodec": "vp8"
         }
 
+        room_id = company_name + "_" + wearable_identification      
+        print(room_id)  
         create_response = await plugin_handle.create_room(
-            room_id=wearable_identification,
+            room_id=room_id,
             configuration=room_config
         )
 
